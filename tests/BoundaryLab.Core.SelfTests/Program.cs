@@ -101,6 +101,12 @@ Check(ripple.Output.StartsWith("今日じゅう", StringComparison.Ordinal),
 Check(ripple.Frames.Any(f => f.RippleEvents.Count > 0),
     "ripple events must be recorded around uncertainty");
 
+var lowConfidenceProbe = Run("harucommit");
+Check(lowConfidenceProbe.Frames.Any(f =>
+        f.RippleEvents.Any(e =>
+            e.SourceKind == "LowConfidenceSegment")),
+    "low-confidence resolved spans must trigger RCR reanalysis evidence");
+
 var punctuation = Run("kyouhaame!");
 Check(punctuation.Output.EndsWith("!", StringComparison.Ordinal),
     "hard punctuation must survive: " + punctuation.Output);

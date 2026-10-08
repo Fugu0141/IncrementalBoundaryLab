@@ -24,6 +24,7 @@ public sealed record PhoneticFirstParameters(
     int MaximumJapaneseFallbackLength = 16,
     double EnglishAnomalyThreshold = 0.80,
     double FreezeConfidenceThreshold = 0.86,
+    double LowConfidenceRippleThreshold = 0.86,
     int HardFreezeLookahead = 12,
     int RippleSegmentRadius = 2,
     int RippleCharacterRadius = 6,

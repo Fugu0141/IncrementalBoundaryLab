@@ -3,7 +3,7 @@ namespace BoundaryLab.Core;
 public sealed class PhoneticFirstSession
 {
     public const string AlgorithmVersion =
-        "iblab-phonetic-first-rcr-v0.4";
+        "iblab-phonetic-first-rcr-v0.4.1";
 
     private readonly PhoneticFirstParameters _parameters;
     private readonly PhoneticFirstResolver _resolver;
@@ -272,6 +272,49 @@ public sealed class PhoneticFirstSession
                 globalOffset,
                 globalOffset + projection.Raw.Length,
                 segment.DecisionReason));
+        }
+
+        // A resolved span can be syntactically valid while still being a weak
+        // interpretation. If enough right context has already arrived, treat
+        // low confidence itself as evidence that the nearby SoftFrozen context
+        // deserves another look. Tail fragments are excluded because they are
+        // naturally uncertain while the user is still typing.
+        foreach (var segment in resolution.Segments
+                     .Where(s =>
+                         s.Language != LanguageKind.Unknown &&
+                         !s.DecisionReason.Contains(
+                             "symbol",
+                             StringComparison.Ordinal) &&
+                         s.Confidence <
+                             _parameters.LowConfidenceRippleThreshold &&
+                         projection.Raw.Length - s.End >=
+                             _parameters.MinimumLookaheadToFreeze))
+        {
+            var gap =
+                _parameters.LowConfidenceRippleThreshold -
+                segment.Confidence;
+            var normalizedGap = Math.Clamp(
+                gap /
+                Math.Max(
+                    _parameters.LowConfidenceRippleThreshold,
+                    0.0001),
+                0,
+                1);
+            var strength = Math.Clamp(
+                _parameters.RippleTriggerThreshold +
+                normalizedGap *
+                (1.0 - _parameters.RippleTriggerThreshold),
+                _parameters.RippleTriggerThreshold,
+                1.0);
+
+            result.Add(new ContextRippleEvent(
+                globalOffset + segment.Start,
+                globalOffset + segment.End,
+                "LowConfidenceSegment",
+                strength,
+                globalOffset,
+                globalOffset + projection.Raw.Length,
+                $"{segment.DecisionReason};confidence={segment.Confidence:F3}"));
         }
 
         foreach (var evidence in resolution.SymbolEvidence

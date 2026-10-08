@@ -73,3 +73,10 @@ prototype on Windows.
 
 Research prototype. The lexicon is intentionally small and transparent while the
 architecture is evaluated.
+
+
+## CI validation
+
+Every push runs focused regressions, the Windows WinForms build, and a deterministic
+large-scale stress/property suite with generated mixed-language cases and 15,000 random
+inputs. See [docs/ci-validation.md](docs/ci-validation.md).
