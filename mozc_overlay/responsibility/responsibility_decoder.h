@@ -58,6 +58,7 @@ class ResponsibilityDecoder {
   LiteralCandidate FindLiteralAt(std::string_view raw,
                                  std::size_t start) const;
   std::size_t FindNextLiteralAnchor(std::string_view raw,
+                                    std::string_view original,
                                     std::size_t start) const;
   ResponsibilitySpan MakeJapaneseSpan(std::string_view raw,
                                       std::size_t start,
