@@ -57,6 +57,11 @@ bool IsAsciiWordChar(char c) {
   return std::isalnum(u) != 0;
 }
 
+bool IsAsciiUpper(char c) {
+  const unsigned char u = static_cast<unsigned char>(c);
+  return u < 0x80 && std::isupper(u) != 0;
+}
+
 bool HasNonAscii(std::string_view value) {
   for (const unsigned char c : value) {
     if (c >= 0x80) {
@@ -168,6 +173,24 @@ ResponsibilityAnalysis ResponsibilityDecoder::Analyze(std::string_view input) {
       continue;
     }
 
+    // Explicit uppercase is strong evidence for an unrecognized literal
+    // (e.g. "Hello", a project name, or a custom identifier). Keep the token
+    // pending until more evidence arrives rather than prematurely sending
+    // its first syllables to the Japanese converter. Known lexemes above
+    // retain their normal Japanese-suffix splitting behavior.
+    if (IsAsciiUpper(input[i])) {
+      analysis.spans.push_back(ResponsibilitySpan{
+          .start = i,
+          .end = token_end,
+          .raw = std::string(input.substr(i, token_end - i)),
+          .responsibility = Responsibility::kLiteral,
+          .stable = token_end < raw.size(),
+          .evidence = "capitalized-literal",
+      });
+      i = token_end;
+      continue;
+    }
+
     // An explicit hard boundary closes an otherwise incomplete English
     // prefix as literal text. This mirrors the C# responsibility decoder:
     // "commi " must never turn into Japanese just because the user stopped.
@@ -205,7 +228,7 @@ ResponsibilityAnalysis ResponsibilityDecoder::Analyze(std::string_view input) {
       break;
     }
 
-    std::size_t end = FindNextLiteralAnchor(raw, i + 1);
+    std::size_t end = FindNextLiteralAnchor(raw, input, i + 1);
     if (end <= i || end > raw.size()) {
       end = raw.size();
     }
@@ -407,9 +430,10 @@ ResponsibilityDecoder::LiteralCandidate ResponsibilityDecoder::FindLiteralAt(
 }
 
 std::size_t ResponsibilityDecoder::FindNextLiteralAnchor(
-    std::string_view raw, std::size_t start) const {
+    std::string_view raw, std::string_view original,
+    std::size_t start) const {
   for (std::size_t i = start; i < raw.size(); ++i) {
-    if (IsHardBoundary(raw[i])) {
+    if (IsHardBoundary(raw[i]) || IsAsciiUpper(original[i])) {
       return i;
     }
 
