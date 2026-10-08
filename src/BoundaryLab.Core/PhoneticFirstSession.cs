@@ -219,13 +219,25 @@ public sealed class PhoneticFirstSession
 
         foreach (var unit in projection.Units)
         {
+            var explainedByLatin = resolution.Segments.Any(s =>
+                s.Language == LanguageKind.English &&
+                s.Confidence >= 0.90 &&
+                s.Start <= unit.Start &&
+                s.End >= unit.End);
+
+            if (explainedByLatin)
+                continue;
+
             if (unit.Kind == PhoneticUnitKind.Pending)
             {
+                var strength =
+                    unit.End == projection.Raw.Length ? 0.35 : 1.0;
+
                 result.Add(new ContextRippleEvent(
                     globalOffset + unit.Start,
                     globalOffset + unit.End,
                     "PendingPhonetic",
-                    1.0,
+                    strength,
                     globalOffset,
                     globalOffset + projection.Raw.Length,
                     unit.Reason));
@@ -456,6 +468,7 @@ public sealed class PhoneticFirstSession
             var globalStart = globalOffset + segment.Start;
             var globalEnd = globalOffset + segment.End;
             var nearAnomaly = anomalies.Any(a =>
+                a.Strength >= _parameters.RippleTriggerThreshold &&
                 Distance(
                     globalStart,
                     globalEnd,
