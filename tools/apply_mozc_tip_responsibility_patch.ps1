@@ -144,19 +144,5 @@ Replace-Required $Build @'
         "//win32/base:config_snapshot",
 '@
 
-Replace-Required $Build @'
-        "//client",
-        "//client:client_interface",
-        "//protocol:commands_cc_proto",
-        "//win32/base:config_snapshot",
-'@ @'
-        "//client",
-        "//client:client_interface",
-        "//protocol:commands_cc_proto",
-        "//responsibility:mozc_japanese_oracle",
-        "//responsibility:responsibility_decoder",
-        "//responsibility:responsibility_runtime",
-        "//win32/base:config_snapshot",
-'@
 
 Write-Host "Applied BoundaryLab Responsibility decoder/runtime state to Mozc TSF TipPrivateContext."
