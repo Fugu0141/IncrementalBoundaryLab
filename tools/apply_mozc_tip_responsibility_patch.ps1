@@ -59,6 +59,8 @@ Replace-Required $Header @'
   client::ClientInterface* GetClient();
   boundarylab::ResponsibilityDecoder* GetResponsibilityDecoder();
   boundarylab::ResponsibilityRuntime* GetResponsibilityRuntime();
+  const commands::Output& responsibility_base_output() const;
+  commands::Output* mutable_responsibility_base_output();
   SurrogatePairObserver* GetSurrogatePairObserver();
 '@
 
@@ -117,6 +119,14 @@ TipPrivateContext::GetResponsibilityDecoder() {
 boundarylab::ResponsibilityRuntime*
 TipPrivateContext::GetResponsibilityRuntime() {
   return state_->responsibility_runtime_.get();
+}
+
+const Output& TipPrivateContext::responsibility_base_output() const {
+  return state_->responsibility_base_output_;
+}
+
+Output* TipPrivateContext::mutable_responsibility_base_output() {
+  return &state_->responsibility_base_output_;
 }
 
 void TipPrivateContext::EnsureInitialized() {
