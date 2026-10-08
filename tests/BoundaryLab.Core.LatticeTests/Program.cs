@@ -83,7 +83,7 @@ var report = EvidenceLatticeResearchExporter.CreateReport(
     real,
     new EvidenceLatticeSession().Parameters);
 var json = EvidenceLatticeResearchExporter.ToJson(report);
-Check(json.Contains("evidence-lattice-v1", StringComparison.Ordinal),
+Check(json.Contains("mozc-responsibility-v1", StringComparison.Ordinal),
     "report format");
 Check(json.Contains("candidateEdges", StringComparison.Ordinal),
     "report must contain lattice edges");

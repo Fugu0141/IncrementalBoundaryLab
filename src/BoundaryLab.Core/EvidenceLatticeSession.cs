@@ -121,10 +121,10 @@ public sealed class EvidenceLatticeSession
 
         if (best is not null && hardCommitEnd > 0)
         {
-            var hardSegments = best.Edges
-                .Where(e => e.End <= hardCommitEnd)
-                .Select(CloseAtHardBoundary)
-                .ToArray();
+            var hardSegments = ClosePathAtHardBoundary(
+                best.Edges,
+                activeRaw,
+                hardCommitEnd);
 
             if (hardSegments.Length > 0 &&
                 hardSegments[^1].End == hardCommitEnd)
@@ -265,6 +265,57 @@ public sealed class EvidenceLatticeSession
             edge.Kind != LatticeEdgeKind.JapaneseMozc ||
             edge.MozcQuality >= 0.65
         );
+
+    private static IReadOnlyList<LatticeEdge> ClosePathAtHardBoundary(
+        IReadOnlyList<LatticeEdge> path,
+        string raw,
+        int hardCommitEnd)
+    {
+        var selected = path
+            .Where(e => e.End <= hardCommitEnd)
+            .ToArray();
+
+        if (selected.Length == 0)
+            return [];
+
+        // When the user explicitly types a hard separator after an unresolved
+        // open token (e.g. "commi "), that separator closes the token as
+        // literal. Do this as one span instead of permanently committing a
+        // chain of Unknown characters.
+        var boundaryIndex = Array.FindLastIndex(
+            selected,
+            e => e.Kind == LatticeEdgeKind.HardBoundary);
+
+        if (boundaryIndex >= 0)
+        {
+            var content = selected.Take(boundaryIndex).ToArray();
+            var boundary = selected[boundaryIndex];
+
+            if (content.Length == 1 &&
+                content[0].Start == 0 &&
+                content[0].Kind is
+                    LatticeEdgeKind.OpenPrefix or
+                    LatticeEdgeKind.Unknown)
+            {
+                var end = content[0].End;
+                var literalRaw = raw[..end];
+                var literal = content[0] with
+                {
+                    Raw = literalRaw,
+                    Output = literalRaw,
+                    Language = LanguageKind.English,
+                    Kind = LatticeEdgeKind.LiteralFallback,
+                    Evidence = "hard-boundary-literal-close"
+                };
+
+                return [literal, boundary];
+            }
+        }
+
+        return selected
+            .Select(CloseAtHardBoundary)
+            .ToArray();
+    }
 
     private static LatticeEdge CloseAtHardBoundary(
         LatticeEdge edge)

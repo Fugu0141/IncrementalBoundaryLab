@@ -439,6 +439,16 @@ internal sealed class EvidenceLatticeDecoder
                 var bonus =
                     probe.Quality * _parameters.MozcScoreWeight;
 
+                if (edge.Kind == LatticeEdgeKind.JapaneseMozc &&
+                    probe.Quality >= 0.75)
+                {
+                    // A connector span such as de-ta exists specifically
+                    // because plain romaji parsing cannot judge '-' safely.
+                    // Strong real Mozc conversion is therefore decisive
+                    // evidence, not just a small reranking hint.
+                    bonus += 3.25;
+                }
+
                 if (probe.Quality < 0.25)
                     bonus -= _parameters.MozcRejectPenalty;
 
