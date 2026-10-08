@@ -46,6 +46,8 @@ public sealed class MozcBridgeOracle : IMozcConversionOracle
     private readonly object _gate = new();
     private readonly Process _process;
     private bool _disposed;
+    private bool _unresponsive;
+    private static readonly TimeSpan BridgeResponseTimeout = TimeSpan.FromSeconds(3);
 
     private MozcBridgeOracle(string executablePath)
     {
@@ -68,7 +70,7 @@ public sealed class MozcBridgeOracle : IMozcConversionOracle
     }
 
     public bool IsAvailable =>
-        !_disposed && !_process.HasExited;
+        !_disposed && !_unresponsive && !_process.HasExited;
 
     public static IMozcConversionOracle TryCreateDefault()
     {
@@ -124,7 +126,13 @@ public sealed class MozcBridgeOracle : IMozcConversionOracle
                 _process.StandardInput.WriteLine(raw);
                 _process.StandardInput.Flush();
 
-                var line = _process.StandardOutput.ReadLine();
+                // A stalled Mozc process must not freeze the WinForms UI
+                // indefinitely. A timed-out reader is abandoned only after
+                // terminating the subprocess so future probes cannot race it.
+                var line = _process.StandardOutput.ReadLineAsync()
+                    .WaitAsync(BridgeResponseTimeout)
+                    .GetAwaiter()
+                    .GetResult();
                 if (line is null)
                     return new(false, false, raw, "", [], 0, "Mozc bridge closed stdout.");
 
@@ -152,9 +160,25 @@ public sealed class MozcBridgeOracle : IMozcConversionOracle
                     quality,
                     response.Error);
             }
+            catch (TimeoutException)
+            {
+                _unresponsive = true;
+                try
+                {
+                    if (!_process.HasExited)
+                        _process.Kill(entireProcessTree: true);
+                }
+                catch
+                {
+                    // Already exited or inaccessible. Keep the oracle disabled.
+                }
+
+                return new(false, false, raw, "", [], 0,
+                    "Mozc bridge response timed out after 3 seconds.");
+            }
             catch (Exception ex)
             {
-                return new(true, false, raw, "", [], 0, ex.Message);
+                return new(IsAvailable, false, raw, "", [], 0, ex.Message);
             }
         }
     }
