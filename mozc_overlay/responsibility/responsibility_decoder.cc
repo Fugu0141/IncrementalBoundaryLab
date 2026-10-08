@@ -26,7 +26,7 @@ constexpr std::array<std::string_view, 35> kEnglishShortWords = {
     "from", "this", "that", "then", "rust", "jsx", "tsx", "css", "the",
     "and", "for", "or", "js", "ts", "cpp", "csharp", "win", "git"};
 
-constexpr std::array<std::string_view, 38> kJapaneseContinuations = {
+constexpr std::array<std::string_view, 39> kJapaneseContinuations = {
     "shimashita", "simashita", "shimasita", "simasita", "shimasu", "simasu",
     "sareta", "shitai", "sitai", "shite", "site", "shita", "sita", "suru",
     "kara", "made", "yori", "miru", "tsukau", "tukau", "okuru", "tateru",
