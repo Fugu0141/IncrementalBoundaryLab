@@ -202,5 +202,22 @@ TEST(ResponsibilityRuntimeTest, PreservesOriginalCaseWhenFlushing) {
   EXPECT_EQ(closed.flushes[0].responsibility, Responsibility::kLiteral);
 }
 
+
+TEST(ResponsibilityRuntimeTest, UnknownCapitalizedWordDoesNotFlushAsJapanese) {
+  RuntimeFakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  ResponsibilityRuntime runtime(&decoder);
+
+  const ResponsibilityRuntimeUpdate before = runtime.Push("Hello");
+  EXPECT_TRUE(before.flushes.empty());
+  EXPECT_EQ(before.pending_raw, "Hello");
+
+  const ResponsibilityRuntimeUpdate closed = runtime.ClosePending();
+  ASSERT_EQ(closed.flushes.size(), 1);
+  EXPECT_EQ(closed.flushes[0].raw, "Hello");
+  EXPECT_EQ(closed.flushes[0].responsibility, Responsibility::kLiteral);
+  EXPECT_TRUE(closed.pending_raw.empty());
+}
+
 }  // namespace
 }  // namespace boundarylab
