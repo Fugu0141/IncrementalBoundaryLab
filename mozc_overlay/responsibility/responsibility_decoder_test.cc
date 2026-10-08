@@ -205,5 +205,44 @@ TEST(ResponsibilityDecoderTest, HardBoundaryClosesOpenToken) {
   EXPECT_EQ(analysis.spans[1].responsibility, Responsibility::kBoundary);
 }
 
+
+TEST(ResponsibilityDecoderTest, HoldsUnknownCapitalizedEnglishAsLiteral) {
+  FakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  const ResponsibilityAnalysis analysis = decoder.Analyze("Hello");
+
+  ASSERT_EQ(analysis.spans.size(), 1);
+  EXPECT_EQ(analysis.spans[0].raw, "Hello");
+  EXPECT_EQ(analysis.spans[0].responsibility, Responsibility::kLiteral);
+  EXPECT_FALSE(analysis.spans[0].stable);
+  EXPECT_EQ(analysis.spans[0].evidence, "capitalized-literal");
+}
+
+TEST(ResponsibilityDecoderTest, FindsUppercaseLiteralAfterJapanesePrefix) {
+  FakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  const ResponsibilityAnalysis analysis = decoder.Analyze("koreHello");
+
+  ASSERT_EQ(analysis.spans.size(), 2);
+  EXPECT_EQ(analysis.spans[0].raw, "kore");
+  EXPECT_EQ(analysis.spans[0].responsibility, Responsibility::kJapanese);
+  EXPECT_TRUE(analysis.spans[0].stable);
+  EXPECT_EQ(analysis.spans[1].raw, "Hello");
+  EXPECT_EQ(analysis.spans[1].responsibility, Responsibility::kLiteral);
+}
+
+TEST(ResponsibilityDecoderTest, CapitalizedKnownLexemeRetainsJapaneseTail) {
+  FakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  const ResponsibilityAnalysis analysis = decoder.Analyze("GitHubni");
+
+  ASSERT_EQ(analysis.spans.size(), 2);
+  EXPECT_EQ(analysis.spans[0].raw, "github");
+  EXPECT_EQ(analysis.spans[0].responsibility, Responsibility::kLiteral);
+  EXPECT_TRUE(analysis.spans[0].stable);
+  EXPECT_EQ(analysis.spans[1].raw, "ni");
+  EXPECT_EQ(analysis.spans[1].responsibility, Responsibility::kJapanese);
+}
+
 }  // namespace
 }  // namespace boundarylab
