@@ -1,0 +1,28 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build core
+        run: dotnet build src/BoundaryLab.Core/BoundaryLab.Core.csproj -c Release
+      - name: Run self tests
+        run: dotnet run --project tests/BoundaryLab.Core.SelfTests/BoundaryLab.Core.SelfTests.csproj -c Release
+
+  winforms:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Build WinForms prototype
+        run: dotnet build src/BoundaryLab.WinForms/BoundaryLab.WinForms.csproj -c Release
