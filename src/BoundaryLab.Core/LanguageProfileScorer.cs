@@ -67,7 +67,8 @@ internal static class LanguageProfileScorer
 
     private static readonly string[] EnglishSeeds =
     [
-        "node", "javascript", "typescript", "python", "rust",
+        "node", "js", "jsx", "ts", "tsx", "json", "html", "css",
+        "javascript", "typescript", "python", "rust",
         "class", "string", "method", "function", "object", "client",
         "server", "network", "debug", "issue", "commit", "merge",
         "branch", "github", "linux", "kernel", "cache", "build",

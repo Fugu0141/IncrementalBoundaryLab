@@ -171,8 +171,16 @@ internal sealed class EvidenceLatticeDecoder
                 }
                 else
                 {
+                    var shortKanaReadablePenalty =
+                        entry.Raw.Length < 5 &&
+                        RomajiConverter.TryConvert(
+                            entry.Raw,
+                            out _)
+                            ? 1.35
+                            : 0.0;
+
                     var exactBonus =
-                        entry.Raw.Length >= 5 ? 1.80 : 0.55;
+                        entry.Raw.Length >= 5 ? 1.80 : 0.20;
 
                     edges.Add(new LatticeEdge(
                         start,
@@ -184,10 +192,11 @@ internal sealed class EvidenceLatticeDecoder
                         entry.Raw.Length -
                         0.45 +
                         exactBonus +
-                        entry.Weight * 0.12 +
+                        entry.Weight * 0.10 +
                         LanguageProfileScorer.Advantage(
                             entry.Raw,
-                            LanguageKind.English) * 0.50,
+                            LanguageKind.English) * 0.50 -
+                        shortKanaReadablePenalty,
                         ja,
                         en,
                         entry.Evidence));
@@ -340,13 +349,50 @@ internal sealed class EvidenceLatticeDecoder
         var symbolCount =
             span.Count(InputSyntax.IsBindingSymbol);
 
+        var firstBinding = span
+            .Select((c, i) => (c, i))
+            .First(x => InputSyntax.IsBindingSymbol(x.c))
+            .i;
+
+        var leftPart = span[..firstBinding];
+        var rightPart =
+            firstBinding + 1 < span.Length
+                ? span[(firstBinding + 1)..]
+                : "";
+
+        var leftAdvantage =
+            LanguageProfileScorer.Advantage(
+                leftPart,
+                LanguageKind.English);
+        var rightAdvantage =
+            rightPart.Length == 0
+                ? 0
+                : LanguageProfileScorer.Advantage(
+                    rightPart,
+                    LanguageKind.English);
+
+        var rightBoundaryBonus =
+            end < raw.Length &&
+            Lexicon.ExactAt(raw, end).Any(e =>
+                e.Language == LanguageKind.Japanese &&
+                e.Weight >= 5.1)
+                ? 1.80
+                : 0.0;
+
+        var componentPenalty =
+            leftPart.Length < 2 ? 1.0 : 0.0;
+
         var score =
             span.Length -
-            0.50 +
-            2.30 +
-            symbolCount * 0.65 +
-            advantage * 0.90 -
-            Math.Max(0, span.Length - 14) * 0.12;
+            0.65 +
+            1.75 +
+            symbolCount * 0.55 +
+            advantage * 0.25 +
+            leftAdvantage * 0.95 +
+            rightAdvantage * 0.65 +
+            rightBoundaryBonus -
+            componentPenalty -
+            Math.Max(0, span.Length - 12) * 0.35;
 
         edges.Add(new LatticeEdge(
             start,
