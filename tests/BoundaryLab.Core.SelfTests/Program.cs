@@ -45,12 +45,37 @@ Check(node.Frames.Any(f =>
         f.SymbolEvidence.Any(e =>
             e.Kind == "LatinBindingToken")),
     "node.js must emit LatinBindingToken evidence");
-Check(node.Frames.Any(f => f.ThawEvents.Count > 0),
-    "period after a provisional Japanese reading should thaw nearby SoftFrozen context");
+Check(node.Frames.Any(f =>
+        f.SymbolEvidence.Any(e =>
+            e.Kind == "IncompleteBindingToken")),
+    "node. must first emit incomplete binding-token evidence");
+
+var thawProbe = Run("kyouhaq");
+Check(thawProbe.Frames.Any(f => f.ThawEvents.Count > 0),
+    "nearby unresolved input must thaw a SoftFrozen prefix");
 
 var nodeJapanese = Run("node.jswotukau");
 Check(nodeJapanese.Output == "node.jsを使う",
     "node.js + Japanese suffix: " + nodeJapanese.Output);
+
+var structuralLatin = new Dictionary<string, string>
+{
+    ["foo_bar"] = "foo_bar",
+    ["c#"] = "c#",
+    ["v2.0"] = "v2.0",
+    ["github.com"] = "github.com"
+};
+
+foreach (var pair in structuralLatin)
+{
+    var actual = Run(pair.Key);
+    Check(actual.Output == pair.Value,
+        pair.Key + " must remain a structural Latin token: " + actual.Output);
+    Check(actual.Frames.Any(f =>
+            f.SymbolEvidence.Any(e =>
+                e.Kind == "LatinBindingToken")),
+        pair.Key + " must emit LatinBindingToken evidence");
+}
 
 var mawasu = Run("mawasu");
 Check(mawasu.Output == "まわす",

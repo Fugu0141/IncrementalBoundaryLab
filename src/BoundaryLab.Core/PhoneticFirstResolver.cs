@@ -175,48 +175,6 @@ internal sealed class PhoneticFirstResolver
                 continue;
             }
 
-            var shortRemaining = end - position;
-            if (shortRemaining is >= 3 and <= 8)
-            {
-                var shortSpan = raw.Substring(position, shortRemaining);
-                var hasInternalParticle = Enumerable.Range(
-                        position + 1,
-                        Math.Max(0, end - position - 1))
-                    .Any(p => Lexicon.ExactAt(raw, p).Any(e =>
-                        e.Language == LanguageKind.Japanese &&
-                        e.Evidence == "japanese-particle" &&
-                        p + e.Raw.Length < end));
-
-                if (hasInternalParticle &&
-                    shortSpan.All(char.IsAsciiLetter) &&
-                    RomajiConverter.TryConvert(shortSpan, out var shortKana))
-                {
-                    candidates.Add(new ResolutionCandidate(
-                        position,
-                        end,
-                        shortSpan,
-                        shortKana,
-                        LanguageKind.Japanese,
-                        0.84,
-                        PhoneticProjector.Readability(
-                            projection, position, end),
-                        0.30,
-                        "short-whole-phonetic-before-particle-split"));
-
-                    output.Add(new ResolvedSegment(
-                        position,
-                        end,
-                        shortSpan,
-                        shortKana,
-                        LanguageKind.Japanese,
-                        0.84,
-                        false,
-                        "stage2-short-whole-phonetic"));
-                    position = end;
-                    continue;
-                }
-            }
-
             var exact = Lexicon.ExactAt(raw, position)
                 .Where(e => e.Language == LanguageKind.Japanese &&
                             position + e.Raw.Length <= end)
@@ -256,6 +214,60 @@ internal sealed class PhoneticFirstResolver
                     $"stage2-{exact.Evidence}"));
                 position = exactEnd;
                 continue;
+            }
+
+            var shortRemaining = end - position;
+            if (shortRemaining is >= 3 and <= 8)
+            {
+                var shortSpan = raw.Substring(position, shortRemaining);
+                var internalPositions = Enumerable.Range(
+                        position + 1,
+                        Math.Max(0, end - position - 1))
+                    .ToArray();
+
+                var hasInternalParticle = internalPositions
+                    .Any(p => Lexicon.ExactAt(raw, p).Any(e =>
+                        e.Language == LanguageKind.Japanese &&
+                        e.Evidence == "japanese-particle" &&
+                        p + e.Raw.Length < end));
+
+                var hasStrongLexemeAhead = internalPositions
+                    .Any(p => Lexicon.ExactAt(raw, p).Any(e =>
+                        e.Language == LanguageKind.Japanese &&
+                        e.Evidence != "japanese-particle" &&
+                        e.Raw.Length >= 3 &&
+                        e.Weight >= 5.2 &&
+                        p + e.Raw.Length <= end));
+
+                if (hasInternalParticle &&
+                    !hasStrongLexemeAhead &&
+                    shortSpan.All(char.IsAsciiLetter) &&
+                    RomajiConverter.TryConvert(shortSpan, out var shortKana))
+                {
+                    candidates.Add(new ResolutionCandidate(
+                        position,
+                        end,
+                        shortSpan,
+                        shortKana,
+                        LanguageKind.Japanese,
+                        0.84,
+                        PhoneticProjector.Readability(
+                            projection, position, end),
+                        0.30,
+                        "short-whole-phonetic-before-particle-split"));
+
+                    output.Add(new ResolvedSegment(
+                        position,
+                        end,
+                        shortSpan,
+                        shortKana,
+                        LanguageKind.Japanese,
+                        0.84,
+                        false,
+                        "stage2-short-whole-phonetic"));
+                    position = end;
+                    continue;
+                }
             }
 
             var nextKnown = FindNextStrongJapaneseLexicalStart(
