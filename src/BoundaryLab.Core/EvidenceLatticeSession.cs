@@ -295,11 +295,24 @@ public sealed class EvidenceLatticeSession
                 content.Any(e =>
                     e.Kind is
                         LatticeEdgeKind.OpenPrefix or
-                        LatticeEdgeKind.Unknown);
+                        LatticeEdgeKind.Unknown or
+                        LatticeEdgeKind.LiteralFallback);
+
+            var hasWholeClosedExplanation =
+                content.Length == 1 &&
+                content[0].Start == 0 &&
+                content[0].End == boundary.Start &&
+                content[0].Kind is not (
+                    LatticeEdgeKind.OpenPrefix or
+                    LatticeEdgeKind.Unknown);
 
             if (content.Length > 0 &&
                 content[0].Start == 0 &&
-                unresolved)
+                !hasWholeClosedExplanation &&
+                (
+                    unresolved ||
+                    content.Select(e => e.Language).Distinct().Count() > 1
+                ))
             {
                 var end = boundary.Start;
                 var literalRaw = raw[..end];

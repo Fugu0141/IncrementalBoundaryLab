@@ -34,6 +34,7 @@ internal sealed class EvidenceLatticeDecoder
 
         var allEdges = GenerateEdges(raw).ToList();
         var probes = EnrichJapaneseEdgesWithMozc(allEdges);
+        ApplyStrongMozcSpanCompetition(allEdges);
 
         var byStart = allEdges
             .GroupBy(e => e.Start)
@@ -472,6 +473,59 @@ internal sealed class EvidenceLatticeDecoder
         }
 
         return probes;
+    }
+
+    private static void ApplyStrongMozcSpanCompetition(
+        List<LatticeEdge> edges)
+    {
+        var strongSpans = edges
+            .Where(e =>
+                e.Kind == LatticeEdgeKind.JapaneseMozc &&
+                e.MozcQuality >= 0.85)
+            .ToArray();
+
+        foreach (var strong in strongSpans)
+        {
+            for (var i = 0; i < edges.Count; i++)
+            {
+                var edge = edges[i];
+
+                if (edge.Start == strong.Start &&
+                    edge.End == strong.End &&
+                    edge.Kind == strong.Kind)
+                    continue;
+
+                var overlaps =
+                    edge.Start < strong.End &&
+                    strong.Start < edge.End;
+
+                if (!overlaps)
+                    continue;
+
+                var createsInternalBoundary =
+                    (edge.Start >= strong.Start &&
+                     edge.Start < strong.End &&
+                     edge.Start != strong.Start) ||
+                    (edge.End > strong.Start &&
+                     edge.End <= strong.End &&
+                     edge.End != strong.End);
+
+                if (!createsInternalBoundary)
+                    continue;
+
+                var penalty =
+                    1.75 * strong.MozcQuality;
+
+                if (edge.Kind == LatticeEdgeKind.LatinStructural)
+                    penalty += 1.50;
+
+                edges[i] = edge with
+                {
+                    LocalScore = edge.LocalScore - penalty,
+                    Evidence = edge.Evidence + "+mozc-span-conflict"
+                };
+            }
+        }
     }
 
     private void AddStructuralLatinEdges(
