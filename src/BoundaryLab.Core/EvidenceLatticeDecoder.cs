@@ -215,7 +215,14 @@ internal sealed class EvidenceLatticeDecoder
             {
                 AddJapanesePhoneticEdges(raw, start, edges);
                 AddMozcConnectorEdges(raw, start, edges);
-                AddLiteralFallbackEdges(raw, start, edges);
+
+                // Unknown-English fallback is intentionally enabled only
+                // when Mozc can act as an independent Japanese oracle.
+                // Without Mozc it can steal long Japanese romaji spans such
+                // as hennkann... merely because they are not fully readable
+                // by the small built-in romanizer.
+                if (_mozc.IsAvailable)
+                    AddLiteralFallbackEdges(raw, start, edges);
             }
 
             AddOpenPrefixEdge(raw, start, edges);

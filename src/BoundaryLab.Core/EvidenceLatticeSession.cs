@@ -90,7 +90,7 @@ public sealed class EvidenceLatticeSession
         if (common.Count > 0)
         {
             var first = common[0];
-            if (CanCommitByConsensus(first) &&
+            if (CanCommitByConsensus(first, activeRaw) &&
                 first.End <=
                 activeRaw.Length -
                 _parameters.CommitLookahead)
@@ -256,15 +256,32 @@ public sealed class EvidenceLatticeSession
         return result;
     }
 
-    private static bool CanCommitByConsensus(LatticeEdge edge) =>
-        edge.Kind is not (
+    private static bool CanCommitByConsensus(
+        LatticeEdge edge,
+        string activeRaw)
+    {
+        if (edge.Kind is
             LatticeEdgeKind.Unknown or
             LatticeEdgeKind.OpenPrefix or
-            LatticeEdgeKind.BindingSymbol) &&
-        (
-            edge.Kind != LatticeEdgeKind.JapaneseMozc ||
-            edge.MozcQuality >= 0.65
-        );
+            LatticeEdgeKind.BindingSymbol)
+            return false;
+
+        if (edge.Kind == LatticeEdgeKind.JapaneseMozc &&
+            edge.MozcQuality < 0.65)
+            return false;
+
+        // A binding symbol immediately after this edge can change the
+        // responsibility of the whole neighborhood:
+        //   de + -ta  => データ (Mozc)
+        //   node + .js => node.js (Literal)
+        // Do not make the left edge irreversible until the symbol and its
+        // right-hand side have been interpreted together.
+        if (edge.End < activeRaw.Length &&
+            InputSyntax.IsBindingSymbol(activeRaw[edge.End]))
+            return false;
+
+        return true;
+    }
 
     private static IReadOnlyList<LatticeEdge> ClosePathAtHardBoundary(
         IReadOnlyList<LatticeEdge> path,
