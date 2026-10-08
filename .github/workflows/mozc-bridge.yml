@@ -70,14 +70,11 @@ jobs:
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force artifacts\mozc | Out-Null
-          Push-Location .external\mozc\src
-          try {
-            $BazelBin = (bazelisk info bazel-bin).Trim()
-          } finally {
-            Pop-Location
-          }
 
-          $Bridge = Join-Path $BazelBin "boundary_bridge\boundary_mozc_bridge.exe"
+          # bazel-bin points at the graph built by the immediately preceding
+          # bridge build. Stage it now before the later TSF build repoints the
+          # convenience symlink to another configuration.
+          $Bridge = ".external\mozc\src\bazel-bin\boundary_bridge\boundary_mozc_bridge.exe"
           if (-not (Test-Path $Bridge)) {
             throw "boundary_mozc_bridge.exe was not found at $Bridge"
           }
@@ -101,14 +98,8 @@ jobs:
         run: |
           New-Item -ItemType Directory -Force artifacts\mozc | Out-Null
 
-          Push-Location .external\mozc\src
-          try {
-            $BazelBin = (bazelisk info bazel-bin).Trim()
-          } finally {
-            Pop-Location
-          }
-
-          $Tip = Join-Path $BazelBin "win32\tip\mozc_tip64.dll"
+          # After the TSF build, bazel-bin points at the TSF configuration.
+          $Tip = ".external\mozc\src\bazel-bin\win32\tip\mozc_tip64.dll"
           if (-not (Test-Path $Tip)) {
             throw "mozc_tip64.dll was not found at $Tip"
           }
