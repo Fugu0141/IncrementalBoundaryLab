@@ -176,7 +176,7 @@ internal sealed class EvidenceLatticeDecoder
                         RomajiConverter.TryConvert(
                             entry.Raw,
                             out _)
-                            ? 1.35
+                            ? 2.35
                             : 0.0;
 
                     var exactBonus =
@@ -380,7 +380,13 @@ internal sealed class EvidenceLatticeDecoder
                 : 0.0;
 
         var componentPenalty =
-            leftPart.Length < 2 ? 1.0 : 0.0;
+            leftPart.All(char.IsAsciiLetter) &&
+            leftPart.Length <= 2
+                ? 2.60
+                : leftPart.All(char.IsAsciiLetter) &&
+                  leftPart.Length == 3
+                    ? 0.45
+                    : 0.0;
 
         var score =
             span.Length -
