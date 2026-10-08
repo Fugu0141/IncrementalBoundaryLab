@@ -48,7 +48,7 @@ jobs:
       - name: Test native responsibility decoder
         shell: powershell
         working-directory: .external/mozc/src
-        run: bazelisk test --config release_build //responsibility:responsibility_decoder_test
+        run: bazelisk test --config release_build --test_output=errors //responsibility:responsibility_decoder_test
 
       - name: Build native Mozc oracle and bridge
         shell: powershell
