@@ -406,7 +406,7 @@ internal sealed class EvidenceLatticeDecoder
         if (!_mozc.IsAvailable)
             return 0;
 
-        var spans = edges
+        var unique = edges
             .Where(e =>
                 e.Language == LanguageKind.Japanese &&
                 e.Kind is
@@ -417,10 +417,42 @@ internal sealed class EvidenceLatticeDecoder
             .Select(g => g
                 .OrderByDescending(e => e.LocalScore)
                 .First())
-            .OrderByDescending(e =>
+            .ToArray();
+
+        var connectorBudget =
+            Math.Max(4, _parameters.MozcProbeBudget / 2);
+
+        var connectors = unique
+            .Where(e =>
                 e.Kind == LatticeEdgeKind.JapaneseMozc)
-            .ThenByDescending(e => e.End - e.Start)
+            .ToArray();
+
+        // Probe connector candidates at multiple scales. Longest-first alone
+        // starves the exact local reading we actually need (e.g. de-ta)
+        // when a long active sentence contains the same hyphen.
+        var compactConnectors = connectors
+            .OrderBy(e => e.End - e.Start)
             .ThenByDescending(e => e.LocalScore)
+            .Take(connectorBudget)
+            .ToArray();
+
+        var broadConnectors = connectors
+            .OrderByDescending(e => e.End - e.Start)
+            .ThenByDescending(e => e.LocalScore)
+            .Take(Math.Max(2, connectorBudget / 2))
+            .ToArray();
+
+        var regular = unique
+            .Where(e =>
+                e.Kind != LatticeEdgeKind.JapaneseMozc)
+            .OrderByDescending(e => e.End - e.Start)
+            .ThenByDescending(e => e.LocalScore);
+
+        var spans = compactConnectors
+            .Concat(broadConnectors)
+            .Concat(regular)
+            .GroupBy(e => (e.Start, e.End, e.Raw))
+            .Select(g => g.First())
             .Take(_parameters.MozcProbeBudget)
             .ToArray();
 

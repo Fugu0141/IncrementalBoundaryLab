@@ -260,22 +260,21 @@ public sealed class EvidenceLatticeSession
         LatticeEdge edge,
         string activeRaw)
     {
+        // v0.6 commits *responsibility decisions*, not Japanese internal
+        // tokenization. JapanesePhonetic/JapaneseLexical edges are useful
+        // decoding evidence, but their internal boundaries belong to Mozc.
         if (edge.Kind is
             LatticeEdgeKind.Unknown or
             LatticeEdgeKind.OpenPrefix or
-            LatticeEdgeKind.BindingSymbol)
+            LatticeEdgeKind.BindingSymbol or
+            LatticeEdgeKind.JapanesePhonetic or
+            LatticeEdgeKind.JapaneseLexical)
             return false;
 
         if (edge.Kind == LatticeEdgeKind.JapaneseMozc &&
             edge.MozcQuality < 0.65)
             return false;
 
-        // A binding symbol immediately after this edge can change the
-        // responsibility of the whole neighborhood:
-        //   de + -ta  => データ (Mozc)
-        //   node + .js => node.js (Literal)
-        // Do not make the left edge irreversible until the symbol and its
-        // right-hand side have been interpreted together.
         if (edge.End < activeRaw.Length &&
             InputSyntax.IsBindingSymbol(activeRaw[edge.End]))
             return false;
