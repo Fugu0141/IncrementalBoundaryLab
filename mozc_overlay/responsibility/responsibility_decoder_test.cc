@@ -76,6 +76,21 @@ TEST(ResponsibilityDecoderTest, LetsMozcOwnJapaneseHyphenReading) {
   EXPECT_EQ(analysis.spans[0].mozc_top_candidate, "データ");
 }
 
+TEST(ResponsibilityDecoderTest, SingleKanaBoundaryEvidenceDoesNotSplitEnglishInline) {
+  FakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+
+  const ResponsibilityAnalysis theory = decoder.Analyze("theory");
+
+  // "o" is useful Japanese evidence at an explicit command boundary, but it
+  // must not make the short English word "the" stable inside "theory".
+  ASSERT_FALSE(theory.spans.empty());
+  EXPECT_FALSE(
+      theory.spans[0].raw == "the" &&
+      theory.spans[0].responsibility == Responsibility::kLiteral &&
+      theory.spans[0].stable);
+}
+
 TEST(ResponsibilityDecoderTest, KeepsNodeJsLiteral) {
   FakeOracle oracle;
   ResponsibilityDecoder decoder(&oracle);

@@ -26,7 +26,20 @@ constexpr std::array<std::string_view, 35> kEnglishShortWords = {
     "from", "this", "that", "then", "rust", "jsx", "tsx", "css", "the",
     "and", "for", "or", "js", "ts", "cpp", "csharp", "win", "git"};
 
-constexpr std::array<std::string_view, 39> kJapaneseContinuations = {
+// Strong evidence that may safely split an English literal from following
+// Japanese while the user is still typing. Keep one-letter kana out of this
+// table: otherwise ordinary English such as "theory" can become "the | ory".
+constexpr std::array<std::string_view, 34> kJapaneseContinuations = {
+    "shimashita", "simashita", "shimasita", "simasita", "shimasu", "simasu",
+    "sareta", "shitai", "sitai", "shite", "site", "shita", "sita", "suru",
+    "kara", "made", "yori", "miru", "tsukau", "tukau", "okuru", "tateru",
+    "kakunin", "ha", "wa", "ga", "wo", "ni", "de", "to", "mo",
+    "he", "no", "yo"};
+
+// At an explicit command boundary (Space/Enter/etc.), a lowercase single kana
+// reading is allowed to prefer Japanese. This table must not be reused as an
+// inline segmentation signal.
+constexpr std::array<std::string_view, 39> kJapaneseBoundaryTokens = {
     "shimashita", "simashita", "shimasita", "simasita", "shimasu", "simasu",
     "sareta", "shitai", "sitai", "shite", "site", "shita", "sita", "suru",
     "kara", "made", "yori", "miru", "tsukau", "tukau", "okuru", "tateru",
@@ -481,7 +494,10 @@ bool ResponsibilityDecoder::PrefersJapaneseAtCommandBoundary(
     return false;
   }
 
-  return IsJapaneseContinuation(normalized);
+  return std::find(
+             kJapaneseBoundaryTokens.begin(),
+             kJapaneseBoundaryTokens.end(),
+             std::string_view(normalized)) != kJapaneseBoundaryTokens.end();
 }
 
 bool ResponsibilityDecoder::IsBindingSymbol(char c) {
