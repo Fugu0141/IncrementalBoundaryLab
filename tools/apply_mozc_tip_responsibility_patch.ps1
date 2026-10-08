@@ -18,13 +18,19 @@ function Replace-Required {
         [string]$New
     )
 
-    $Text = Get-Content -Raw -Path $Path
-    if (-not $Text.Contains($Old)) {
+    $Text = (Get-Content -Raw -Path $Path).Replace("`r`n", "`n")
+    $OldNormalized = $Old.Replace("`r`n", "`n")
+    $NewNormalized = $New.Replace("`r`n", "`n")
+
+    if (-not $Text.Contains($OldNormalized)) {
         throw "Expected patch anchor was not found in $Path"
     }
 
-    $Text = $Text.Replace($Old, $New)
-    Set-Content -Path $Path -Value $Text -Encoding utf8NoBOM
+    $Text = $Text.Replace($OldNormalized, $NewNormalized)
+    [System.IO.File]::WriteAllText(
+        $Path,
+        $Text,
+        [System.Text.UTF8Encoding]::new($false))
 }
 
 $Header = Join-Path $MozcRoot "src\win32\tip\tip_private_context.h"
