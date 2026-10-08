@@ -17,6 +17,24 @@ internal static class PhoneticProjector
 
         while (i < raw.Length)
         {
+            if (!char.IsAsciiLetter(raw[i]))
+            {
+                var literal = raw[i].ToString();
+                units.Add(new PhoneticUnit(
+                    i,
+                    i + 1,
+                    literal,
+                    literal,
+                    PhoneticUnitKind.Symbol,
+                    InputSyntax.IsSymbol(raw[i]) ? 1.0 : 0.65,
+                    InputSyntax.IsSymbol(raw[i])
+                        ? "orthographic-symbol"
+                        : "literal-non-letter"));
+                preview.Append(literal);
+                i++;
+                continue;
+            }
+
             if (RomajiConverter.TryConsume(raw, i, out var consumed, out var kana))
             {
                 var token = raw.Substring(i, consumed);
@@ -39,8 +57,10 @@ internal static class PhoneticProjector
             for (var len = maxPrefix; len >= 1; len--)
             {
                 var tail = raw.Substring(i, len);
-                if (!RomajiConverter.IsPossiblePrefix(tail))
+                if (!tail.All(char.IsAsciiLetter) ||
+                    !RomajiConverter.IsPossiblePrefix(tail))
                     continue;
+
                 prefixLength = len;
                 break;
             }
@@ -75,8 +95,13 @@ internal static class PhoneticProjector
             i++;
         }
 
-        var kanaCoverage = (double)kanaCharacters / raw.Length;
-        var ambiguousCoverage = (double)ambiguousCharacters / raw.Length;
+        var letterCount = raw.Count(char.IsAsciiLetter);
+        if (letterCount == 0)
+            return new PhoneticProjection(
+                raw, preview.ToString(), 0, 0, 0, units);
+
+        var kanaCoverage = (double)kanaCharacters / letterCount;
+        var ambiguousCoverage = (double)ambiguousCharacters / letterCount;
         var unresolved = Math.Clamp(
             1.0 - kanaCoverage - ambiguousCoverage * 0.35,
             0,
@@ -100,7 +125,7 @@ internal static class PhoneticProjector
             return 0;
 
         var weighted = 0.0;
-        var length = end - start;
+        var counted = 0;
 
         foreach (var unit in projection.Units)
         {
@@ -110,10 +135,14 @@ internal static class PhoneticProjector
                 continue;
 
             var overlap = overlapEnd - overlapStart;
+            if (unit.Kind == PhoneticUnitKind.Symbol)
+                continue;
+
             weighted += overlap * unit.Confidence;
+            counted += overlap;
         }
 
-        return Math.Clamp(weighted / length, 0, 1);
+        return counted == 0 ? 0 : Math.Clamp(weighted / counted, 0, 1);
     }
 
     public static string PreviewRange(

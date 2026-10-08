@@ -9,7 +9,7 @@ public static class PhoneticFirstResearchExporter
         PhoneticFirstAnalysisResult result,
         PhoneticFirstParameters parameters) =>
         new(
-            "incremental-boundary-lab/phonetic-first-v1",
+            "incremental-boundary-lab/phonetic-first-rcr-v2",
             PhoneticFirstSession.AlgorithmVersion,
             DateTimeOffset.UtcNow,
             result.Input,
@@ -28,7 +28,6 @@ public static class PhoneticFirstResearchExporter
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
         options.Converters.Add(new JsonStringEnumConverter());
-
         return JsonSerializer.Serialize(report, options);
     }
 }

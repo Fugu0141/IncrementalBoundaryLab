@@ -2,7 +2,8 @@ namespace BoundaryLab.Core;
 
 internal sealed record PhoneticResolution(
     IReadOnlyList<ResolvedSegment> Segments,
-    IReadOnlyList<ResolutionCandidate> Candidates);
+    IReadOnlyList<ResolutionCandidate> Candidates,
+    IReadOnlyList<SymbolEvidence> SymbolEvidence);
 
 internal sealed class PhoneticFirstResolver
 {
@@ -18,17 +19,25 @@ internal sealed class PhoneticFirstResolver
         PhoneticProjection projection)
     {
         if (raw.Length == 0)
-            return new PhoneticResolution([], []);
+            return new PhoneticResolution([], [], []);
 
         var candidates = new List<ResolutionCandidate>();
-        var anchors = SelectEnglishAnchors(raw, projection, candidates);
+        var symbolEvidence = OrthographicEvidenceDetector.Find(raw);
+        var anchors = SelectLatinAnchors(
+            raw,
+            projection,
+            symbolEvidence,
+            candidates);
+
         var segments = new List<ResolvedSegment>();
         var position = 0;
 
         foreach (var anchor in anchors)
         {
             if (anchor.Start > position)
-                ResolveJapaneseGap(raw, position, anchor.Start, projection, segments, candidates);
+                ResolveJapaneseGap(
+                    raw, position, anchor.Start,
+                    projection, segments, candidates);
 
             segments.Add(new ResolvedSegment(
                 anchor.Start,
@@ -36,24 +45,53 @@ internal sealed class PhoneticFirstResolver
                 anchor.Raw,
                 anchor.Output,
                 LanguageKind.English,
-                Math.Clamp(0.90 + (1.0 - anchor.PhoneticConfidence) * 0.08, 0, 0.99),
+                anchor.Reason == "orthographic-binding-token"
+                    ? 0.98
+                    : Math.Clamp(
+                        0.90 + (1.0 - anchor.PhoneticConfidence) * 0.08,
+                        0, 0.99),
                 false,
-                "stage2-english-from-phonetic-anomaly"));
+                anchor.Reason == "orthographic-binding-token"
+                    ? "stage2-orthographic-latin-token"
+                    : "stage2-english-from-phonetic-anomaly"));
             position = anchor.End;
         }
 
         if (position < raw.Length)
-            ResolveJapaneseGap(raw, position, raw.Length, projection, segments, candidates);
+            ResolveJapaneseGap(
+                raw, position, raw.Length,
+                projection, segments, candidates);
 
-        return new PhoneticResolution(segments, candidates);
+        return new PhoneticResolution(
+            segments,
+            candidates,
+            symbolEvidence);
     }
 
-    private IReadOnlyList<ResolutionCandidate> SelectEnglishAnchors(
+    private IReadOnlyList<ResolutionCandidate> SelectLatinAnchors(
         string raw,
         PhoneticProjection projection,
+        IReadOnlyList<SymbolEvidence> symbolEvidence,
         List<ResolutionCandidate> allCandidates)
     {
         var anchors = new List<ResolutionCandidate>();
+
+        foreach (var evidence in symbolEvidence
+                     .Where(e => e.Kind == "LatinBindingToken" && e.Complete))
+        {
+            var candidate = new ResolutionCandidate(
+                evidence.Start,
+                evidence.End,
+                evidence.Raw,
+                evidence.Raw,
+                LanguageKind.English,
+                9.0 + evidence.Raw.Length * 0.05,
+                0,
+                evidence.Confidence,
+                "orthographic-binding-token");
+            allCandidates.Add(candidate);
+            anchors.Add(candidate);
+        }
 
         for (var start = 0; start < raw.Length; start++)
         {
@@ -61,9 +99,6 @@ internal sealed class PhoneticFirstResolver
                          .Where(e => e.Language == LanguageKind.English))
             {
                 var end = start + entry.Raw.Length;
-                // Re-project the candidate in isolation. The global phonetic stream may
-                // consume across the candidate boundary (e.g. commit + asita => "ta"),
-                // which is exactly the ambiguity Stage 2 is supposed to reconsider.
                 var isolatedProjection = PhoneticProjector.Project(entry.Raw);
                 var readability = PhoneticProjector.Readability(
                     isolatedProjection,
@@ -71,7 +106,9 @@ internal sealed class PhoneticFirstResolver
                     entry.Raw.Length);
                 var anomaly = 1.0 - readability;
                 var lexical = WeightToConfidence(entry.Weight);
-                var score = lexical * 2.0 + anomaly * 2.5 + entry.Raw.Length * 0.03;
+                var score = lexical * 2.0 +
+                            anomaly * 2.5 +
+                            entry.Raw.Length * 0.03;
 
                 var candidate = new ResolutionCandidate(
                     start,
@@ -95,11 +132,13 @@ internal sealed class PhoneticFirstResolver
 
         var chosen = new List<ResolutionCandidate>();
         foreach (var candidate in anchors
-                     .OrderByDescending(c => c.Score)
+                     .OrderByDescending(c => c.Reason == "orthographic-binding-token")
+                     .ThenByDescending(c => c.Score)
                      .ThenByDescending(c => c.End - c.Start))
         {
             if (chosen.Any(x => Overlaps(x, candidate)))
                 continue;
+
             chosen.Add(candidate);
         }
 
@@ -118,6 +157,24 @@ internal sealed class PhoneticFirstResolver
 
         while (position < end)
         {
+            if (!char.IsAsciiLetter(raw[position]))
+            {
+                var literal = raw[position].ToString();
+                output.Add(new ResolvedSegment(
+                    position,
+                    position + 1,
+                    literal,
+                    literal,
+                    LanguageKind.Unknown,
+                    InputSyntax.IsHardBoundary(raw[position]) ? 0.99 : 0.70,
+                    false,
+                    InputSyntax.IsHardBoundary(raw[position])
+                        ? "stage2-hard-boundary-symbol"
+                        : "stage2-symbol"));
+                position++;
+                continue;
+            }
+
             var exact = Lexicon.ExactAt(raw, position)
                 .Where(e => e.Language == LanguageKind.Japanese &&
                             position + e.Raw.Length <= end)
@@ -128,8 +185,12 @@ internal sealed class PhoneticFirstResolver
             if (exact is not null)
             {
                 var exactEnd = position + exact.Raw.Length;
-                var readability = PhoneticProjector.Readability(projection, position, exactEnd);
-                var confidence = exact.Evidence == "japanese-romaji-alias" ? 0.92 : 0.96;
+                var readability = PhoneticProjector.Readability(
+                    projection,
+                    position,
+                    exactEnd);
+                var confidence =
+                    exact.Evidence == "japanese-romaji-alias" ? 0.92 : 0.96;
 
                 candidates.Add(new ResolutionCandidate(
                     position,
@@ -155,17 +216,31 @@ internal sealed class PhoneticFirstResolver
                 continue;
             }
 
-            var nextKnown = FindNextJapaneseLexicalStart(raw, position, end);
-            var fallbackEnd = nextKnown > position ? nextKnown : end;
+            var nextKnown = FindNextStrongJapaneseLexicalStart(
+                raw, position, end);
+            var nextSymbol = FindNextSymbol(raw, position, end);
+
+            var fallbackEnd = end;
+            if (nextKnown > position)
+                fallbackEnd = Math.Min(fallbackEnd, nextKnown);
+            if (nextSymbol > position)
+                fallbackEnd = Math.Min(fallbackEnd, nextSymbol);
+
             fallbackEnd = Math.Min(
                 fallbackEnd,
                 position + _parameters.MaximumJapaneseFallbackLength);
 
             var found = false;
-            for (var candidateEnd = fallbackEnd; candidateEnd > position; candidateEnd--)
+            for (var candidateEnd = fallbackEnd;
+                 candidateEnd > position;
+                 candidateEnd--)
             {
-                var span = raw.Substring(position, candidateEnd - position);
-                if (!RomajiConverter.TryConvert(span, out var kana))
+                var span = raw.Substring(
+                    position,
+                    candidateEnd - position);
+
+                if (!span.All(char.IsAsciiLetter) ||
+                    !RomajiConverter.TryConvert(span, out var kana))
                     continue;
 
                 var readability = PhoneticProjector.Readability(
@@ -175,7 +250,9 @@ internal sealed class PhoneticFirstResolver
 
                 var boundarySupported = candidateEnd < end &&
                     Lexicon.ExactAt(raw, candidateEnd)
-                        .Any(e => e.Language == LanguageKind.Japanese);
+                        .Any(e =>
+                            e.Language == LanguageKind.Japanese &&
+                            e.Evidence != "japanese-particle");
 
                 var confidence = boundarySupported ? 0.89 : 0.80;
                 candidates.Add(new ResolutionCandidate(
@@ -188,7 +265,7 @@ internal sealed class PhoneticFirstResolver
                     readability,
                     0.35,
                     boundarySupported
-                        ? "phonetic-fallback + lexical-boundary"
+                        ? "phonetic-fallback + strong-lexical-boundary"
                         : "phonetic-fallback"));
 
                 output.Add(new ResolvedSegment(
@@ -219,7 +296,10 @@ internal sealed class PhoneticFirstResolver
                 rawUnit,
                 LanguageKind.Unknown,
                 -2,
-                PhoneticProjector.Readability(projection, position, unresolvedEnd),
+                PhoneticProjector.Readability(
+                    projection,
+                    position,
+                    unresolvedEnd),
                 0,
                 "unresolved-after-stage2"));
 
@@ -236,19 +316,44 @@ internal sealed class PhoneticFirstResolver
         }
     }
 
-    private static int FindNextJapaneseLexicalStart(
+    private static int FindNextStrongJapaneseLexicalStart(
         string raw,
         int start,
         int end)
     {
-        for (var position = start + 1; position < end; position++)
+        for (var position = start + 1;
+             position < end;
+             position++)
         {
+            if (!char.IsAsciiLetter(raw[position]))
+                return position;
+
             var matches = Lexicon.ExactAt(raw, position)
-                .Where(e => e.Language == LanguageKind.Japanese &&
-                            position + e.Raw.Length <= end)
+                .Where(e =>
+                    e.Language == LanguageKind.Japanese &&
+                    e.Evidence != "japanese-particle" &&
+                    position + e.Raw.Length <= end)
                 .ToArray();
 
-            if (matches.Any(e => e.Raw.Length >= 2 && e.Weight >= 5.2))
+            if (matches.Any(e =>
+                e.Raw.Length >= 3 &&
+                e.Weight >= 5.2))
+                return position;
+        }
+
+        return -1;
+    }
+
+    private static int FindNextSymbol(
+        string raw,
+        int start,
+        int end)
+    {
+        for (var position = start + 1;
+             position < end;
+             position++)
+        {
+            if (!char.IsAsciiLetter(raw[position]))
                 return position;
         }
 
@@ -258,7 +363,8 @@ internal sealed class PhoneticFirstResolver
     private static bool Overlaps(
         ResolutionCandidate left,
         ResolutionCandidate right) =>
-        left.Start < right.End && right.Start < left.End;
+        left.Start < right.End &&
+        right.Start < left.End;
 
     private static double WeightToConfidence(double weight) =>
         Math.Clamp((weight - 3.5) / 3.5, 0, 1);

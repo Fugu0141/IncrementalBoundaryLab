@@ -7,14 +7,28 @@ public enum PhoneticUnitKind
 {
     Kana,
     Ambiguous,
-    Pending
+    Pending,
+    Symbol
+}
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum FreezeState
+{
+    Active,
+    SoftFrozen,
+    HardFrozen
 }
 
 public sealed record PhoneticFirstParameters(
     int MinimumLookaheadToFreeze = 2,
     int MaximumJapaneseFallbackLength = 16,
     double EnglishAnomalyThreshold = 0.80,
-    double FreezeConfidenceThreshold = 0.86);
+    double FreezeConfidenceThreshold = 0.86,
+    int HardFreezeLookahead = 12,
+    int RippleSegmentRadius = 2,
+    int RippleCharacterRadius = 6,
+    double RippleDecay = 0.45,
+    double RippleTriggerThreshold = 0.45);
 
 public sealed record PhoneticUnit(
     int Start,
@@ -44,6 +58,38 @@ public sealed record ResolutionCandidate(
     double LexicalConfidence,
     string Reason);
 
+public sealed record SymbolEvidence(
+    int Start,
+    int End,
+    string Raw,
+    string Kind,
+    double Confidence,
+    bool Complete,
+    string Reason);
+
+public sealed record ContextRippleEvent(
+    int SourceStart,
+    int SourceEnd,
+    string SourceKind,
+    double Strength,
+    int AffectedStart,
+    int AffectedEnd,
+    string Reason);
+
+public sealed record ThawEvent(
+    int Start,
+    int End,
+    IReadOnlyList<string> RawSegments,
+    string Reason);
+
+public sealed record FreezeTransition(
+    int Start,
+    int End,
+    string Raw,
+    FreezeState From,
+    FreezeState To,
+    string Reason);
+
 public sealed record ResolvedSegment(
     int Start,
     int End,
@@ -52,7 +98,9 @@ public sealed record ResolvedSegment(
     LanguageKind Language,
     double Confidence,
     bool Confirmed,
-    string DecisionReason);
+    string DecisionReason,
+    FreezeState FreezeState = FreezeState.Active,
+    double ContextPenalty = 0);
 
 public sealed record PhoneticFirstFrame(
     int Step,
@@ -67,7 +115,11 @@ public sealed record PhoneticFirstFrame(
     string Output,
     int AnalyzedCharactersThisStep,
     long TotalAnalyzedCharacters,
-    bool Rebuilt);
+    bool Rebuilt,
+    IReadOnlyList<SymbolEvidence> SymbolEvidence,
+    IReadOnlyList<ContextRippleEvent> RippleEvents,
+    IReadOnlyList<ThawEvent> ThawEvents,
+    IReadOnlyList<FreezeTransition> FreezeTransitions);
 
 public sealed record PhoneticFirstAnalysisResult(
     string Input,
@@ -75,7 +127,15 @@ public sealed record PhoneticFirstAnalysisResult(
     int CommittedRawLength,
     IReadOnlyList<ResolvedSegment> CommittedSegments,
     IReadOnlyList<ResolvedSegment> ActiveSegments,
-    IReadOnlyList<PhoneticFirstFrame> Frames);
+    IReadOnlyList<PhoneticFirstFrame> Frames)
+{
+    public int HardCommittedRawLength =>
+        CommittedSegments
+            .Where(s => s.FreezeState == FreezeState.HardFrozen)
+            .Select(s => s.End)
+            .DefaultIfEmpty(0)
+            .Max();
+}
 
 public sealed record PhoneticFirstResearchReport(
     string FormatVersion,

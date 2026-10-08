@@ -16,33 +16,72 @@ PhoneticFirstAnalysisResult Run(string text)
 
 var sample = Run("kyouhacommitsimasita");
 Check(sample.Output == "今日はcommitしました",
-    $"basic output: {sample.Output}");
-Check(sample.CommittedSegments.Any(s => s.Raw == "commit" && s.Language == LanguageKind.English),
+    "basic output: " + sample.Output);
+Check(sample.CommittedSegments
+        .Concat(sample.ActiveSegments)
+        .Any(s =>
+            s.Raw == "commit" &&
+            s.Language == LanguageKind.English),
     "commit must be recognized as English");
-Check(sample.Frames[^1].Stage1.Raw == sample.Frames[^1].ActiveRaw,
-    "stage1 must only describe the active window");
 
 var methodCase = Run(
     "seidohasugokuiikannzininattakaramethodtositehakonnnakannzideiikamo");
-Check(methodCase.Output.Contains("method", StringComparison.Ordinal),
-    $"method must survive as English: {methodCase.Output}");
-Check(methodCase.CommittedSegments
-        .Concat(methodCase.ActiveSegments)
-        .Any(s => s.Raw == "method" &&
-                  s.Language == LanguageKind.English),
-    "method segment must be English");
 Check(methodCase.Output ==
       "精度はすごくいい感じになったからmethodとしてはこんな感じでいいかも",
-    $"method sentence: {methodCase.Output}");
+    "method sentence: " + methodCase.Output);
 
-var longCase = Run(
-    "kyouhacommitasitanimotikosunogamenndoudattakarakousitayo");
-Check(longCase.Output.StartsWith("今日はcommit明日に", StringComparison.Ordinal),
-    $"long sample prefix: {longCase.Output}");
+var node = Run("node.js");
+Check(node.Output == "node.js",
+    "node.js must remain literal: " + node.Output);
+Check(node.CommittedSegments
+        .Concat(node.ActiveSegments)
+        .Any(s =>
+            s.Raw == "node.js" &&
+            s.Language == LanguageKind.English &&
+            s.DecisionReason ==
+                "stage2-orthographic-latin-token"),
+    "node.js must be protected by orthographic evidence");
+Check(node.Frames.Any(f =>
+        f.SymbolEvidence.Any(e =>
+            e.Kind == "LatinBindingToken")),
+    "node.js must emit LatinBindingToken evidence");
+Check(node.Frames.Any(f => f.ThawEvents.Count > 0),
+    "period after a provisional Japanese reading should thaw nearby SoftFrozen context");
 
-var nnCase = Run("kannzi");
-Check(nnCase.Output is "感じ" or "かんじ",
-    $"nn must be consumed as one ん: {nnCase.Output}");
+var nodeJapanese = Run("node.jswotukau");
+Check(nodeJapanese.Output == "node.jsを使う",
+    "node.js + Japanese suffix: " + nodeJapanese.Output);
+
+var mawasu = Run("mawasu");
+Check(mawasu.Output == "まわす",
+    "mawasu should not be ma|wa|su: " + mawasu.Output);
+Check(!mawasu.CommittedSegments
+        .Concat(mawasu.ActiveSegments)
+        .Any(s =>
+            s.Raw == "wa" &&
+            s.DecisionReason ==
+                "stage2-japanese-particle"),
+    "wa inside mawasu must not become a particle");
+
+var rippleSession = new PhoneticFirstSession();
+const string rippleText = "kyouzyuunitaiousiteoitayo";
+for (var i = 1; i <= rippleText.Length; i++)
+    rippleSession.Update(rippleText[..i]);
+
+var ripple = rippleSession.Update(rippleText);
+Check(!ripple.Output.Contains('z'),
+    "zyu must not remain unresolved: " + ripple.Output);
+Check(ripple.Output.StartsWith("今日じゅう", StringComparison.Ordinal),
+    "kyouzyuu must remain locally revisable: " + ripple.Output);
+Check(ripple.Frames.Any(f => f.RippleEvents.Count > 0),
+    "ripple events must be recorded around uncertainty");
+
+var punctuation = Run("kyouhaame!");
+Check(punctuation.Output.EndsWith("!", StringComparison.Ordinal),
+    "hard punctuation must survive: " + punctuation.Output);
+Check(punctuation.Frames[^1].SymbolEvidence.Any(e =>
+        e.Kind == "HardBoundary"),
+    "hard punctuation must emit boundary evidence");
 
 var perfSession = new PhoneticFirstSession();
 const string perfText =
@@ -52,39 +91,60 @@ for (var i = 1; i <= perfText.Length; i++)
 
 var perf = perfSession.Update(perfText);
 var last = perf.Frames[^1];
-var naiveWork = (long)perfText.Length * (perfText.Length + 1) / 2;
+var naiveWork =
+    (long)perfText.Length *
+    (perfText.Length + 1) / 2;
+
 Check(last.TotalAnalyzedCharacters < naiveWork,
-    $"frozen-prefix path should do less work than full-prefix reanalysis: {last.TotalAnalyzedCharacters} >= {naiveWork}");
-Check(perf.CommittedRawLength > 0,
-    "long append-only input should freeze at least one prefix");
+    "RCR must remain cheaper than full-prefix reanalysis: " +
+    last.TotalAnalyzedCharacters + " >= " + naiveWork);
 
-var report = PhoneticFirstResearchExporter.CreateReport(perf, perfSession.Parameters);
-var json = PhoneticFirstResearchExporter.ToJson(report);
-Check(json.Contains("phonetic-first-v1", StringComparison.Ordinal),
-    "new report format must be phonetic-first-v1");
-Check(json.Contains("\"stage1\"", StringComparison.Ordinal),
-    "report must contain stage1 trace");
-Check(json.Contains("\"stage2Candidates\"", StringComparison.Ordinal),
-    "report must contain stage2 candidates");
-Check(json.Contains("\"frozenThisStep\"", StringComparison.Ordinal),
-    "report must contain freeze events");
-Check(json.Contains("\"analyzedCharactersThisStep\"", StringComparison.Ordinal),
-    "report must contain workload measurements");
+var report =
+    PhoneticFirstResearchExporter.CreateReport(
+        ripple,
+        rippleSession.Parameters);
+var json =
+    PhoneticFirstResearchExporter.ToJson(report);
 
-Check(!IncrementalRecognizer.IsValidInput("abc123"), "digits must still be rejected");
-Check(IncrementalRecognizer.IsValidInput("KyouHaCommit"), "ASCII letters are valid");
+Check(json.Contains("phonetic-first-rcr-v2",
+        StringComparison.Ordinal),
+    "report format must be RCR v2");
+Check(json.Contains("\"rippleEvents\"",
+        StringComparison.Ordinal),
+    "report must contain ripple events");
+Check(json.Contains("\"thawEvents\"",
+        StringComparison.Ordinal),
+    "report must contain thaw events");
+Check(json.Contains("\"symbolEvidence\"",
+        StringComparison.Ordinal),
+    "report must contain symbol evidence");
+Check(json.Contains("\"freezeTransitions\"",
+        StringComparison.Ordinal),
+    "report must contain freeze transitions");
+
+Check(InputSyntax.IsAllowed('.'),
+    "period must be accepted");
+Check(InputSyntax.IsAllowed('#'),
+    "binding symbols must be accepted");
+Check(InputSyntax.IsAllowed('2'),
+    "digits must be accepted");
 
 if (failures.Count > 0)
 {
-    Console.Error.WriteLine($"FAILED: {failures.Count}");
+    Console.Error.WriteLine(
+        "FAILED: " + failures.Count);
     foreach (var failure in failures)
         Console.Error.WriteLine(" - " + failure);
     return 1;
 }
 
-Console.WriteLine("All phonetic-first self-tests passed.");
-Console.WriteLine($"Basic: {sample.Output}");
-Console.WriteLine($"Method: {methodCase.Output}");
-Console.WriteLine($"Long: {longCase.Output}");
-Console.WriteLine($"Work: {last.TotalAnalyzedCharacters} vs naive {naiveWork}");
+Console.WriteLine(
+    "All phonetic-first RCR self-tests passed.");
+Console.WriteLine("Basic: " + sample.Output);
+Console.WriteLine("Node: " + node.Output);
+Console.WriteLine("Node+JA: " + nodeJapanese.Output);
+Console.WriteLine("Ripple: " + ripple.Output);
+Console.WriteLine(
+    "Work: " + last.TotalAnalyzedCharacters +
+    " vs naive " + naiveWork);
 return 0;

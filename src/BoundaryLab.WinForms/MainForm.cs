@@ -20,14 +20,16 @@ public sealed class MainForm : Form
     private readonly DataGridView _phoneticUnits = Grid();
     private readonly DataGridView _segments = Grid();
     private readonly DataGridView _candidates = Grid();
+    private readonly DataGridView _symbols = Grid();
+    private readonly DataGridView _ripple = Grid();
     private readonly DataGridView _timeline = Grid();
 
     public MainForm()
     {
-        Text = "Incremental Boundary Lab — phonetic-first v0.3";
-        Width = 1320;
-        Height = 900;
-        MinimumSize = new Size(1000, 720);
+        Text = "Incremental Boundary Lab — phonetic-first + RCR v0.4";
+        Width = 1380;
+        Height = 920;
+        MinimumSize = new Size(1040, 740);
         StartPosition = FormStartPosition.CenterScreen;
         AutoScaleMode = AutoScaleMode.Dpi;
 
@@ -46,23 +48,24 @@ public sealed class MainForm : Form
 
         root.Controls.Add(new Label
         {
-            Text = "Phonetic-first: ①まず音として読む → ②読みにくい部分を英語/日本語へ再解釈 → ③確定prefixを凍結",
+            Text = "v0.4: ①音写 → ②局所再解釈 → ③矛盾が出たらSoftFrozenだけ局所解凍",
             AutoSize = true,
             Font = new Font(Font, FontStyle.Bold)
         });
 
         _input.Dock = DockStyle.Top;
         _input.Font = new Font("Consolas", 15);
-        _input.PlaceholderText = "seidohasugokuiikannzininattakaramethodtositeha...";
+        _input.PlaceholderText = "node.jswotukau / kyouzyuuni...";
         _input.TextChanged += (_, _) => AnalyzeInput();
         _input.KeyPress += (_, e) =>
         {
-            if (!char.IsControl(e.KeyChar) && !char.IsAsciiLetter(e.KeyChar))
+            if (!char.IsControl(e.KeyChar) &&
+                !InputSyntax.IsAllowed(e.KeyChar))
                 e.Handled = true;
         };
         root.Controls.Add(_input);
 
-        root.Controls.Add(MakeLabeled("確定済みprefix", _committed));
+        root.Controls.Add(MakeLabeled("Frozen prefix", _committed));
         root.Controls.Add(MakeLabeled("Active Window", _active));
         root.Controls.Add(MakeLabeled("Stage 1 音写", _phonetic));
         root.Controls.Add(MakeLabeled("Stage 2 まとまり", _groups));
@@ -75,14 +78,16 @@ public sealed class MainForm : Form
         root.Controls.Add(new Label
         {
             AutoSize = true,
-            Text = "確定済みprefixは末尾追加時に再解析しません。削除/途中編集時のみ安全のため全履歴を再構築します。"
+            Text = "SoftFrozenは近傍のUnknown/記号で解凍可能。HardFrozenは十分な先読み後のみ固定。ピリオドやアンダースコア等はLatin構造の証拠として利用します。"
         });
 
         var tabs = new TabControl { Dock = DockStyle.Fill };
-        tabs.TabPages.Add(Page("Stage 1 phonetic units", _phoneticUnits));
-        tabs.TabPages.Add(Page("Stage 2 segments", _segments));
+        tabs.TabPages.Add(Page("Stage 1 phonetic", _phoneticUnits));
+        tabs.TabPages.Add(Page("Segments / freeze", _segments));
         tabs.TabPages.Add(Page("Stage 2 candidates", _candidates));
-        tabs.TabPages.Add(Page("Incremental workload", _timeline));
+        tabs.TabPages.Add(Page("Orthographic evidence", _symbols));
+        tabs.TabPages.Add(Page("RCR events", _ripple));
+        tabs.TabPages.Add(Page("Workload", _timeline));
         root.Controls.Add(tabs);
 
         var actions = new FlowLayoutPanel
@@ -96,17 +101,15 @@ public sealed class MainForm : Form
         basic.Click += (_, _) => _input.Text = "kyouhacommitsimasita";
         actions.Controls.Add(basic);
 
-        var method = new Button { Text = "method研究例", AutoSize = true };
-        method.Click += (_, _) =>
-            _input.Text = "seidohasugokuiikannzininattakaramethodtositehakonnnakannzideiikamo";
-        actions.Controls.Add(method);
+        var node = new Button { Text = "node.js例", AutoSize = true };
+        node.Click += (_, _) => _input.Text = "node.jswotukau";
+        actions.Controls.Add(node);
 
-        var longExample = new Button { Text = "長文例", AutoSize = true };
-        longExample.Click += (_, _) =>
-            _input.Text = "kyouhacommitasitanimotikosunogamenndoudattakarakousitayo";
-        actions.Controls.Add(longExample);
+        var ripple = new Button { Text = "Ripple例", AutoSize = true };
+        ripple.Click += (_, _) => _input.Text = "kyouzyuunitaiousiteoitayo";
+        actions.Controls.Add(ripple);
 
-        var export = new Button { Text = "phonetic-first研究JSONを書き出す", AutoSize = true };
+        var export = new Button { Text = "RCR研究JSONを書き出す", AutoSize = true };
         export.Click += (_, _) => ExportJson();
         actions.Controls.Add(export);
 
@@ -162,10 +165,12 @@ public sealed class MainForm : Form
     private void AnalyzeInput()
     {
         var caret = _input.SelectionStart;
-        var filtered = new string(_input.Text
-            .Where(char.IsAsciiLetter)
-            .Select(char.ToLowerInvariant)
-            .ToArray());
+        var filtered = new string(
+            _input.Text
+                .Where(InputSyntax.IsAllowed)
+                .ToArray());
+
+        filtered = InputSyntax.Normalize(filtered);
 
         if (_input.Text != filtered)
         {
@@ -191,33 +196,53 @@ public sealed class MainForm : Form
             _phoneticUnits.DataSource = null;
             _segments.DataSource = null;
             _candidates.DataSource = null;
+            _symbols.DataSource = null;
+            _ripple.DataSource = null;
             _timeline.DataSource = null;
             return;
         }
 
         var last = _result.Frames[^1];
-        _committed.Text =
-            $"{_result.Input[.._result.CommittedRawLength]}  →  " +
-            string.Concat(_result.CommittedSegments.Select(s => s.Output));
+        _committed.Text = string.Join(
+            " | ",
+            _result.CommittedSegments.Select(s =>
+                s.Raw + ":" +
+                (s.FreezeState == FreezeState.HardFrozen ? "H" : "S")));
         _active.Text = last.ActiveRaw;
         _phonetic.Text = last.Stage1.Preview;
         _groups.Text = string.Join(
             " | ",
-            _result.CommittedSegments.Concat(_result.ActiveSegments).Select(s => s.Raw));
+            _result.CommittedSegments
+                .Concat(_result.ActiveSegments)
+                .Select(s => s.Raw));
         _converted.Text = _result.Output;
 
         var total = last.TotalAnalyzedCharacters;
-        var naive = (long)_result.Input.Length * (_result.Input.Length + 1) / 2;
-        var reduction = naive == 0 ? 0 : 1.0 - (double)total / naive;
+        var naive =
+            (long)_result.Input.Length *
+            (_result.Input.Length + 1) / 2;
+        var reduction =
+            naive == 0 ? 0 : 1.0 - (double)total / naive;
+
+        var soft = _result.CommittedSegments.Count(s =>
+            s.FreezeState == FreezeState.SoftFrozen);
+        var hard = _result.CommittedSegments.Count(s =>
+            s.FreezeState == FreezeState.HardFrozen);
 
         _summary.Text =
-            $"入力 {_result.Input.Length}文字 / 確定prefix {_result.CommittedRawLength}文字 / " +
-            $"Active {last.ActiveRaw.Length}文字 / 今回解析 {last.AnalyzedCharactersThisStep}文字 / " +
-            $"累積解析 {total}文字 / 全prefix再解析比 {reduction:P1}削減";
+            "入力 " + _result.Input.Length +
+            " / Active " + last.ActiveRaw.Length +
+            " / Soft " + soft +
+            " / Hard " + hard +
+            " / Ripple " + last.RippleEvents.Count +
+            " / Thaw " + last.ThawEvents.Count +
+            " / 今回解析 " + last.AnalyzedCharactersThisStep +
+            " / 累積 " + total +
+            " / 全文prefix比 " + reduction.ToString("P1") + "削減";
 
         _phoneticUnits.DataSource = last.Stage1.Units.Select(u => new
         {
-            Range = $"{u.Start}..{u.End}",
+            Range = u.Start + ".." + u.End,
             u.Raw,
             u.Preview,
             Kind = u.Kind.ToString(),
@@ -229,18 +254,19 @@ public sealed class MainForm : Form
             .Concat(_result.ActiveSegments)
             .Select(s => new
             {
-                Range = $"{s.Start}..{s.End}",
+                Range = s.Start + ".." + s.End,
                 s.Raw,
                 s.Output,
                 Language = s.Language.ToString(),
-                Status = s.Confirmed ? "Frozen" : "Active",
+                Freeze = s.FreezeState.ToString(),
                 Confidence = s.Confidence.ToString("P1"),
+                ContextPenalty = s.ContextPenalty.ToString("P1"),
                 s.DecisionReason
             }).ToList();
 
         _candidates.DataSource = last.Stage2Candidates.Select(c => new
         {
-            Range = $"{c.Start}..{c.End}",
+            Range = c.Start + ".." + c.End,
             c.Raw,
             c.Output,
             Language = c.Language.ToString(),
@@ -250,16 +276,48 @@ public sealed class MainForm : Form
             c.Reason
         }).ToList();
 
+        _symbols.DataSource = last.SymbolEvidence.Select(e => new
+        {
+            Range = e.Start + ".." + e.End,
+            e.Raw,
+            e.Kind,
+            Confidence = e.Confidence.ToString("P1"),
+            e.Complete,
+            e.Reason
+        }).ToList();
+
+        var eventRows = new List<RcrEventRow>();
+        eventRows.AddRange(last.RippleEvents.Select(e => new RcrEventRow(
+            "Ripple",
+            e.SourceStart + ".." + e.SourceEnd,
+            e.SourceKind + " -> " + e.AffectedStart + ".." + e.AffectedEnd,
+            e.Strength.ToString("P0"),
+            e.Reason)));
+        eventRows.AddRange(last.ThawEvents.Select(e => new RcrEventRow(
+            "Thaw",
+            e.Start + ".." + e.End,
+            string.Join("|", e.RawSegments),
+            "",
+            e.Reason)));
+        eventRows.AddRange(last.FreezeTransitions.Select(e => new RcrEventRow(
+            "Freeze",
+            e.Start + ".." + e.End,
+            e.Raw + ": " + e.From + " -> " + e.To,
+            "",
+            e.Reason)));
+        _ripple.DataSource = eventRows;
+
         _timeline.DataSource = _result.Frames.Select(f => new
         {
             f.Step,
             f.CommittedRawLength,
             ActiveLength = f.ActiveRaw.Length,
-            Stage1 = f.Stage1.Preview,
             f.Output,
             Work = f.AnalyzedCharactersThisStep,
             TotalWork = f.TotalAnalyzedCharacters,
-            Frozen = f.FrozenThisStep.Count,
+            Ripple = f.RippleEvents.Count,
+            Thaw = f.ThawEvents.Count,
+            FreezeChanges = f.FreezeTransitions.Count,
             f.Rebuilt
         }).ToList();
     }
@@ -275,22 +333,31 @@ public sealed class MainForm : Form
         using var dialog = new SaveFileDialog
         {
             Filter = "Research JSON (*.json)|*.json",
-            FileName = $"boundary-lab-phonetic-first-{DateTime.Now:yyyyMMdd-HHmmss}.json",
+            FileName = "boundary-lab-rcr-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json",
             AddExtension = true
         };
 
         if (dialog.ShowDialog(this) != DialogResult.OK)
             return;
 
-        var report = PhoneticFirstResearchExporter.CreateReport(
-            _result,
-            _session.Parameters);
+        var report =
+            PhoneticFirstResearchExporter.CreateReport(
+                _result,
+                _session.Parameters);
         File.WriteAllText(
             dialog.FileName,
             PhoneticFirstResearchExporter.ToJson(report),
             new UTF8Encoding(false));
+
         MessageBox.Show(
-            "phonetic-first研究データを書き出しました。",
+            "RCR研究データを書き出しました。",
             "Incremental Boundary Lab");
     }
+
+    private sealed record RcrEventRow(
+        string Type,
+        string Range,
+        string Detail,
+        string Strength,
+        string Reason);
 }
