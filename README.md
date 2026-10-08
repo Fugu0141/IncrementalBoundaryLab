@@ -80,3 +80,13 @@ architecture is evaluated.
 Every push runs focused regressions, the Windows WinForms build, and a deterministic
 large-scale stress/property suite with generated mixed-language cases and 15,000 random
 inputs. See [docs/ci-validation.md](docs/ci-validation.md).
+
+
+## Experimental v0.5 — Evidence Lattice + Delayed Commit
+
+The active experiment on branch `experiment/evidence-lattice-v0.5` replaces reactive
+RCR as the primary decoder with a sparse multi-hypothesis lattice. Japanese phonetic,
+Japanese lexical, English lexical, structural Latin, symbol and unknown interpretations
+compete in parallel. Only a prefix shared by multiple competitive paths is committed.
+
+See [docs/evidence-lattice-v0.5.md](docs/evidence-lattice-v0.5.md).

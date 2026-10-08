@@ -14,8 +14,19 @@ jobs:
           dotnet-version: "8.0.x"
       - name: Build core
         run: dotnet build src/BoundaryLab.Core/BoundaryLab.Core.csproj -c Release
-      - name: Run focused regression tests
+      - name: Run RCR focused regression tests
         run: dotnet run --project tests/BoundaryLab.Core.SelfTests/BoundaryLab.Core.SelfTests.csproj -c Release
+
+  lattice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Run Evidence Lattice v0.5 tests
+        run: dotnet run --project tests/BoundaryLab.Core.LatticeTests/BoundaryLab.Core.LatticeTests.csproj -c Release
 
   stress:
     runs-on: ubuntu-latest
