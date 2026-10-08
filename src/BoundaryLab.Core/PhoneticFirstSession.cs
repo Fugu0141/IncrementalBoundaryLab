@@ -3,7 +3,7 @@ namespace BoundaryLab.Core;
 public sealed class PhoneticFirstSession
 {
     public const string AlgorithmVersion =
-        "iblab-phonetic-first-rcr-v0.4.1";
+        "iblab-phonetic-first-rcr-v0.4.2";
 
     private readonly PhoneticFirstParameters _parameters;
     private readonly PhoneticFirstResolver _resolver;
@@ -64,6 +64,11 @@ public sealed class PhoneticFirstSession
         var transitions = new List<FreezeTransition>();
         var thawEvents = new List<ThawEvent>();
         var rippleEvents = new List<ContextRippleEvent>();
+
+        ProbeSoftTailForCrossBoundaryCandidate(
+            thawEvents,
+            transitions,
+            rippleEvents);
 
         PromoteOldSoftSegments(transitions);
 
@@ -335,6 +340,89 @@ public sealed class PhoneticFirstSession
             .Select(g =>
                 g.OrderByDescending(x => x.Strength).First())
             .ToArray();
+    }
+
+    private void ProbeSoftTailForCrossBoundaryCandidate(
+        List<ThawEvent> thawEvents,
+        List<FreezeTransition> transitions,
+        List<ContextRippleEvent> rippleEvents)
+    {
+        if (_input.Length == 0 ||
+            !_committed.Any(s =>
+                s.FreezeState == FreezeState.SoftFrozen))
+            return;
+
+        var oldBoundary = CommittedRawLength();
+        if (_input.Length <= oldBoundary)
+            return;
+
+        var softTail = _committed
+            .Select((segment, index) => (segment, index))
+            .Where(x =>
+                x.segment.FreezeState == FreezeState.SoftFrozen)
+            .TakeLast(_parameters.RippleSegmentRadius)
+            .ToArray();
+
+        if (softTail.Length == 0)
+            return;
+
+        var firstIndex = softTail[0].index;
+
+        // Never review across a HardFrozen segment.
+        if (_committed
+            .Skip(firstIndex)
+            .Any(s => s.FreezeState == FreezeState.HardFrozen))
+            return;
+
+        var reviewStart = _committed[firstIndex].Start;
+        var reviewEnd = Math.Min(
+            _input.Length,
+            oldBoundary +
+            Math.Max(
+                _parameters.RippleCharacterRadius * 2,
+                8));
+
+        if (reviewEnd <= oldBoundary)
+            return;
+
+        var reviewRaw =
+            _input[reviewStart..reviewEnd];
+        var projection =
+            PhoneticProjector.Project(reviewRaw);
+        var resolution =
+            _resolver.Resolve(reviewRaw, projection);
+
+        var localBoundary =
+            oldBoundary - reviewStart;
+
+        var crossing = resolution.Segments
+            .Where(s =>
+                s.Start < localBoundary &&
+                s.End > localBoundary)
+            .OrderByDescending(s => s.Confidence)
+            .FirstOrDefault();
+
+        if (crossing is null ||
+            crossing.Language == LanguageKind.Unknown ||
+            crossing.Confidence <
+                _parameters.FreezeConfidenceThreshold)
+            return;
+
+        var anomaly = new ContextRippleEvent(
+            oldBoundary,
+            oldBoundary,
+            "CrossBoundaryReinterpretation",
+            1.0,
+            reviewStart,
+            reviewEnd,
+            $"{crossing.DecisionReason}:{crossing.Raw}");
+
+        rippleEvents.Add(anomaly);
+
+        ThawSoftTail(
+            [anomaly],
+            thawEvents,
+            transitions);
     }
 
     private bool ShouldThawSoftTail(

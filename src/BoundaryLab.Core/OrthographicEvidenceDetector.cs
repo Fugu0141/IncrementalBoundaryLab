@@ -116,17 +116,38 @@ internal static class OrthographicEvidenceDetector
         int rightStart,
         int rawEnd)
     {
-        for (var split = rightStart + 1; split <= rawEnd - 2; split++)
+        // Binding punctuation is strong orthographic evidence. Keep the
+        // complete right-hand token by default and split only when the suffix
+        // begins with independently strong Japanese lexical evidence.
+        // This prevents node.core -> node.c + おれ while still allowing
+        // node.js + wo/tukau and github.com + de.
+        for (var split = rightStart + 1; split < rawEnd; split++)
         {
             var latinPart = raw[rightStart..split];
             var suffix = raw[split..rawEnd];
 
             if (!latinPart.Any(char.IsAsciiLetter) ||
-                !suffix.All(char.IsAsciiLetter) ||
-                !RomajiConverter.TryConvert(suffix, out _))
+                !suffix.All(char.IsAsciiLetter))
                 continue;
 
-            var latinProjection = PhoneticProjector.Project(latinPart);
+            var strongJapaneseSuffix =
+                Lexicon.ExactAt(raw, split).Any(e =>
+                    e.Language == LanguageKind.Japanese &&
+                    e.Weight >= 5.1 &&
+                    (
+                        e.Evidence == "japanese-particle" ||
+                        e.Evidence == "japanese-verb-suffix" ||
+                        e.Evidence == "japanese-auxiliary" ||
+                        e.Evidence == "japanese-verb" ||
+                        e.Raw.Length >= 3
+                    ));
+
+            if (!strongJapaneseSuffix)
+                continue;
+
+            var latinProjection =
+                PhoneticProjector.Project(latinPart);
+
             if (latinProjection.UnresolvedRatio >= 0.20)
                 return split;
         }
