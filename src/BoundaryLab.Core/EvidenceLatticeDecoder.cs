@@ -3,7 +3,8 @@ namespace BoundaryLab.Core;
 internal sealed record EvidenceLatticeDecodeResult(
     IReadOnlyList<LatticeEdge> CandidateEdges,
     IReadOnlyList<LatticePathSnapshot> TopPaths,
-    int ExpandedEdges);
+    int ExpandedEdges,
+    int MozcProbes);
 
 internal sealed class EvidenceLatticeDecoder
 {
@@ -12,18 +13,28 @@ internal sealed class EvidenceLatticeDecoder
         IReadOnlyList<LatticeEdge> Edges);
 
     private readonly EvidenceLatticeParameters _parameters;
+    private readonly IMozcConversionOracle _mozc;
+    private readonly Dictionary<string, MozcProbeResult> _mozcCache =
+        new(StringComparer.Ordinal);
 
-    public EvidenceLatticeDecoder(EvidenceLatticeParameters parameters)
+    public EvidenceLatticeDecoder(
+        EvidenceLatticeParameters parameters,
+        IMozcConversionOracle? mozc = null)
     {
         _parameters = parameters;
+        _mozc = mozc ?? new NullMozcConversionOracle();
     }
+
+    public bool MozcAvailable => _mozc.IsAvailable;
 
     public EvidenceLatticeDecodeResult Decode(string raw)
     {
         if (raw.Length == 0)
-            return new EvidenceLatticeDecodeResult([], [], 0);
+            return new EvidenceLatticeDecodeResult([], [], 0, 0);
 
-        var allEdges = GenerateEdges(raw);
+        var allEdges = GenerateEdges(raw).ToList();
+        var probes = EnrichJapaneseEdgesWithMozc(allEdges);
+
         var byStart = allEdges
             .GroupBy(e => e.Start)
             .ToDictionary(
@@ -66,11 +77,9 @@ internal sealed class EvidenceLatticeDecoder
                         edge.LocalScore +
                         TransitionScore(previous, edge);
 
-                    var path = new PathState(
+                    states[edge.End].Add(new PathState(
                         score,
-                        state.Edges.Append(edge).ToArray());
-
-                    states[edge.End].Add(path);
+                        state.Edges.Append(edge).ToArray()));
 
                     if (states[edge.End].Count >
                         _parameters.BeamWidth * 5)
@@ -115,13 +124,13 @@ internal sealed class EvidenceLatticeDecoder
         return new EvidenceLatticeDecodeResult(
             allEdges,
             snapshots,
-            expanded);
+            expanded,
+            probes);
     }
 
     private IReadOnlyList<LatticeEdge> GenerateEdges(string raw)
     {
         var edges = new List<LatticeEdge>();
-
         AddStructuralLatinEdges(raw, edges);
 
         for (var start = 0; start < raw.Length; start++)
@@ -173,9 +182,7 @@ internal sealed class EvidenceLatticeDecoder
                 {
                     var shortKanaReadablePenalty =
                         entry.Raw.Length < 5 &&
-                        RomajiConverter.TryConvert(
-                            entry.Raw,
-                            out _)
+                        RomajiConverter.TryConvert(entry.Raw, out _)
                             ? 2.35
                             : 0.0;
 
@@ -205,41 +212,12 @@ internal sealed class EvidenceLatticeDecoder
 
             if (char.IsAsciiLetter(c))
             {
-                var maxEnd = Math.Min(
-                    raw.Length,
-                    start + _parameters.MaxPhoneticSpan);
-
-                for (var end = start + 1; end <= maxEnd; end++)
-                {
-                    var span = raw[start..end];
-                    if (!span.All(char.IsAsciiLetter))
-                        break;
-
-                    if (!RomajiConverter.TryConvert(span, out var kana))
-                        continue;
-
-                    var (ja, en) =
-                        LanguageProfileScorer.Score(span);
-                    var advantage =
-                        LanguageProfileScorer.Advantage(
-                            span,
-                            LanguageKind.Japanese);
-
-                    edges.Add(new LatticeEdge(
-                        start,
-                        end,
-                        span,
-                        kana,
-                        LanguageKind.Japanese,
-                        LatticeEdgeKind.JapanesePhonetic,
-                        span.Length -
-                        0.55 +
-                        advantage * 0.42,
-                        ja,
-                        en,
-                        "phonetic-lattice"));
-                }
+                AddJapanesePhoneticEdges(raw, start, edges);
+                AddMozcConnectorEdges(raw, start, edges);
+                AddLiteralFallbackEdges(raw, start, edges);
             }
+
+            AddOpenPrefixEdge(raw, start, edges);
 
             if (!edges.Any(e => e.Start == start))
                 edges.Add(UnknownEdge(raw, start));
@@ -254,6 +232,234 @@ internal sealed class EvidenceLatticeDecoder
             .ThenByDescending(e => e.End - e.Start)
             .ThenByDescending(e => e.LocalScore)
             .ToArray();
+    }
+
+    private void AddJapanesePhoneticEdges(
+        string raw,
+        int start,
+        List<LatticeEdge> edges)
+    {
+        var maxEnd = Math.Min(
+            raw.Length,
+            start + _parameters.MaxPhoneticSpan);
+
+        for (var end = start + 1; end <= maxEnd; end++)
+        {
+            var span = raw[start..end];
+            if (!span.All(char.IsAsciiLetter))
+                break;
+
+            if (!RomajiConverter.TryConvert(span, out var kana))
+                continue;
+
+            var (ja, en) = LanguageProfileScorer.Score(span);
+            var advantage =
+                LanguageProfileScorer.Advantage(
+                    span,
+                    LanguageKind.Japanese);
+
+            edges.Add(new LatticeEdge(
+                start,
+                end,
+                span,
+                kana,
+                LanguageKind.Japanese,
+                LatticeEdgeKind.JapanesePhonetic,
+                span.Length -
+                0.55 +
+                advantage * 0.42,
+                ja,
+                en,
+                "phonetic-lattice"));
+        }
+    }
+
+    private void AddMozcConnectorEdges(
+        string raw,
+        int start,
+        List<LatticeEdge> edges)
+    {
+        if (!_mozc.IsAvailable)
+            return;
+
+        var maxEnd = Math.Min(
+            raw.Length,
+            start + _parameters.MaxPhoneticSpan);
+
+        for (var end = start + 3; end <= maxEnd; end++)
+        {
+            var span = raw[start..end];
+            if (!span.Contains('-'))
+                continue;
+
+            if (!span.All(c => char.IsAsciiLetter(c) || c == '-'))
+                break;
+
+            if (!char.IsAsciiLetter(span[0]) ||
+                !char.IsAsciiLetter(span[^1]))
+                continue;
+
+            var (ja, en) = LanguageProfileScorer.Score(span);
+            edges.Add(new LatticeEdge(
+                start,
+                end,
+                span,
+                span,
+                LanguageKind.Japanese,
+                LatticeEdgeKind.JapaneseMozc,
+                span.Length * 0.55 - 1.25,
+                ja,
+                en,
+                "mozc-connector-candidate"));
+        }
+    }
+
+    private void AddLiteralFallbackEdges(
+        string raw,
+        int start,
+        List<LatticeEdge> edges)
+    {
+        var maxEnd = Math.Min(
+            raw.Length,
+            start + _parameters.MaxLatinSide);
+
+        for (var end = start + 4; end <= maxEnd; end++)
+        {
+            var span = raw[start..end];
+            if (!span.All(char.IsAsciiLetter))
+                break;
+
+            if (RomajiConverter.TryConvert(span, out _))
+                continue;
+
+            var advantage =
+                LanguageProfileScorer.Advantage(
+                    span,
+                    LanguageKind.English);
+
+            if (advantage < 0.20)
+                continue;
+
+            var (ja, en) = LanguageProfileScorer.Score(span);
+            edges.Add(new LatticeEdge(
+                start,
+                end,
+                span,
+                span,
+                LanguageKind.English,
+                LatticeEdgeKind.LiteralFallback,
+                span.Length - 1.1 + advantage * 0.75,
+                ja,
+                en,
+                "english-profile-fallback"));
+        }
+    }
+
+    private static void AddOpenPrefixEdge(
+        string raw,
+        int start,
+        List<LatticeEdge> edges)
+    {
+        var tail = raw[start..];
+        if (tail.Length == 0 ||
+            !tail.All(char.IsAsciiLetter))
+            return;
+
+        var lexiconPrefix = Lexicon.Entries.Any(e =>
+            e.Raw.Length > tail.Length &&
+            e.Raw.StartsWith(tail, StringComparison.Ordinal));
+
+        var romajiPrefix =
+            tail.Length <= 3 &&
+            RomajiConverter.IsPossiblePrefix(tail);
+
+        if (!lexiconPrefix && !romajiPrefix)
+            return;
+
+        var (ja, en) = LanguageProfileScorer.Score(tail);
+        edges.Add(new LatticeEdge(
+            start,
+            raw.Length,
+            tail,
+            tail,
+            LanguageKind.Unknown,
+            LatticeEdgeKind.OpenPrefix,
+            0.35 + tail.Length * 0.18,
+            ja,
+            en,
+            lexiconPrefix
+                ? "open-lexicon-prefix"
+                : "open-romaji-prefix"));
+    }
+
+    private int EnrichJapaneseEdgesWithMozc(
+        List<LatticeEdge> edges)
+    {
+        if (!_mozc.IsAvailable)
+            return 0;
+
+        var spans = edges
+            .Where(e =>
+                e.Language == LanguageKind.Japanese &&
+                e.Kind is
+                    LatticeEdgeKind.JapanesePhonetic or
+                    LatticeEdgeKind.JapaneseLexical or
+                    LatticeEdgeKind.JapaneseMozc)
+            .GroupBy(e => (e.Start, e.End, e.Raw))
+            .Select(g => g
+                .OrderByDescending(e => e.LocalScore)
+                .First())
+            .OrderByDescending(e => e.End - e.Start)
+            .ThenByDescending(e => e.LocalScore)
+            .Take(_parameters.MozcProbeBudget)
+            .ToArray();
+
+        var probes = 0;
+
+        foreach (var span in spans)
+        {
+            if (!_mozcCache.TryGetValue(span.Raw, out var probe))
+            {
+                probe = _mozc.Probe(span.Raw);
+                _mozcCache[span.Raw] = probe;
+                probes++;
+            }
+
+            if (!probe.Available || !probe.Success)
+                continue;
+
+            for (var i = 0; i < edges.Count; i++)
+            {
+                var edge = edges[i];
+                if (edge.Start != span.Start ||
+                    edge.End != span.End ||
+                    edge.Language != LanguageKind.Japanese)
+                    continue;
+
+                var bonus =
+                    probe.Quality * _parameters.MozcScoreWeight;
+
+                if (probe.Quality < 0.25)
+                    bonus -= _parameters.MozcRejectPenalty;
+
+                var output =
+                    probe.Quality >= 0.65 &&
+                    !string.IsNullOrWhiteSpace(probe.TopCandidate)
+                        ? probe.TopCandidate!
+                        : edge.Output;
+
+                edges[i] = edge with
+                {
+                    Output = output,
+                    LocalScore = edge.LocalScore + bonus,
+                    Evidence = edge.Evidence + "+mozc",
+                    MozcQuality = probe.Quality,
+                    MozcTopCandidate = probe.TopCandidate
+                };
+            }
+        }
+
+        return probes;
     }
 
     private void AddStructuralLatinEdges(
@@ -388,6 +594,26 @@ internal sealed class EvidenceLatticeDecoder
                     ? 0.45
                     : 0.0;
 
+        var hyphenPenalty = 0.0;
+        if (span.Contains('-'))
+        {
+            var leftJa =
+                LanguageProfileScorer.Advantage(
+                    leftPart,
+                    LanguageKind.Japanese);
+            var rightJa =
+                rightPart.Length == 0
+                    ? 0
+                    : LanguageProfileScorer.Advantage(
+                        rightPart,
+                        LanguageKind.Japanese);
+
+            hyphenPenalty =
+                1.10 +
+                Math.Max(0, leftJa) * 0.75 +
+                Math.Max(0, rightJa) * 0.75;
+        }
+
         var score =
             span.Length -
             0.65 +
@@ -398,6 +624,7 @@ internal sealed class EvidenceLatticeDecoder
             rightAdvantage * 0.65 +
             rightBoundaryBonus -
             componentPenalty -
+            hyphenPenalty -
             Math.Max(0, span.Length - 12) * 0.35;
 
         edges.Add(new LatticeEdge(
@@ -443,9 +670,7 @@ internal sealed class EvidenceLatticeDecoder
         if (previous.Language != current.Language &&
             previous.Language != LanguageKind.Unknown &&
             current.Language != LanguageKind.Unknown)
-        {
             score -= _parameters.LanguageSwitchPenalty;
-        }
 
         if (previous.Language == LanguageKind.English &&
             IsJapaneseParticle(current))
@@ -458,18 +683,21 @@ internal sealed class EvidenceLatticeDecoder
         if (current.Kind == LatticeEdgeKind.Unknown)
             score -= 1.0;
 
+        if (current.Kind == LatticeEdgeKind.OpenPrefix)
+            score -= 0.10;
+
         return score;
     }
 
     private static bool IsJapaneseParticle(LatticeEdge edge) =>
         edge.Language == LanguageKind.Japanese &&
-        edge.Evidence == "japanese-particle";
+        edge.Evidence.StartsWith("japanese-particle", StringComparison.Ordinal);
 
     private static bool IsJapaneseSuffix(LatticeEdge edge) =>
         edge.Language == LanguageKind.Japanese &&
         (
-            edge.Evidence == "japanese-verb-suffix" ||
-            edge.Evidence == "japanese-auxiliary"
+            edge.Evidence.StartsWith("japanese-verb-suffix", StringComparison.Ordinal) ||
+            edge.Evidence.StartsWith("japanese-auxiliary", StringComparison.Ordinal)
         );
 
     private static LatticeEdge SymbolEdge(

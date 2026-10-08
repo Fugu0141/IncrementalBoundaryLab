@@ -5,7 +5,8 @@ namespace BoundaryLab.WinForms;
 
 public sealed class MainForm : Form
 {
-    private readonly EvidenceLatticeSession _session = new();
+    private readonly IMozcConversionOracle _mozc;
+    private readonly EvidenceLatticeSession _session;
     private EvidenceLatticeResult _result =
         new("", "", 0, [], [], []);
 
@@ -23,12 +24,17 @@ public sealed class MainForm : Form
 
     public MainForm()
     {
-        Text = "Incremental Boundary Lab — Evidence Lattice v0.5";
-        Width = 1400;
-        Height = 920;
-        MinimumSize = new Size(1040, 740);
+        _mozc = MozcBridgeOracle.TryCreateDefault();
+        _session = new EvidenceLatticeSession(mozc: _mozc);
+
+        Text = "Incremental Boundary Lab — Mozc Responsibility IME v0.6";
+        Width = 1460;
+        Height = 940;
+        MinimumSize = new Size(1060, 760);
         StartPosition = FormStartPosition.CenterScreen;
         AutoScaleMode = AutoScaleMode.Dpi;
+
+        FormClosed += (_, _) => _mozc.Dispose();
 
         var root = new TableLayoutPanel
         {
@@ -45,14 +51,15 @@ public sealed class MainForm : Form
 
         root.Controls.Add(new Label
         {
-            Text = "v0.5: 複数解釈を同時保持 → 上位候補が一致したprefixだけ遅延commit",
+            Text = "v0.6: Japanese / Literal / Open を分離し、日本語候補はMozcの実変換結果を境界スコアへ戻す",
             AutoSize = true,
             Font = new Font(Font, FontStyle.Bold)
         });
 
         _input.Dock = DockStyle.Top;
         _input.Font = new Font("Consolas", 15);
-        _input.PlaceholderText = "hennkannnikannsitehacommit... node.js...";
+        _input.PlaceholderText =
+            "commitsitade-tawogithubnipushsitekudasai";
         _input.TextChanged += (_, _) => AnalyzeInput();
         _input.KeyPress += (_, e) =>
         {
@@ -65,8 +72,8 @@ public sealed class MainForm : Form
         root.Controls.Add(MakeLabeled("Committed prefix", _committed));
         root.Controls.Add(MakeLabeled("Active Window", _active));
         root.Controls.Add(MakeLabeled("Phonetic preview", _phonetic));
-        root.Controls.Add(MakeLabeled("Best path", _bestPath));
-        root.Controls.Add(MakeLabeled("最終表示", _converted));
+        root.Controls.Add(MakeLabeled("Best responsibility path", _bestPath));
+        root.Controls.Add(MakeLabeled("Mozc-aware preview", _converted));
 
         _summary.AutoSize = true;
         _summary.Padding = new Padding(0, 4, 0, 4);
@@ -75,12 +82,12 @@ public sealed class MainForm : Form
         root.Controls.Add(new Label
         {
             AutoSize = true,
-            Text = "単一のconfidenceでは確定せず、score-window内の複数pathのprefix合意をcommit条件にします。RCR v0.4はCore内に比較用として残っています。"
+            Text = "OpenPrefix / Unknown は通常commit禁止。'-' はLatin固定せずMozc候補とも競合させます。Mozc bridgeが無い場合はv0.5互換のヒューリスティックのみで動作します。"
         });
 
         var tabs = new TabControl { Dock = DockStyle.Fill };
         tabs.TabPages.Add(Page("Top hypotheses", _paths));
-        tabs.TabPages.Add(Page("Lattice edges", _edges));
+        tabs.TabPages.Add(Page("Responsibility / Mozc edges", _edges));
         tabs.TabPages.Add(Page("Commit / workload", _timeline));
         root.Controls.Add(tabs);
 
@@ -91,21 +98,21 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill
         };
 
-        var basic = new Button { Text = "基本例", AutoSize = true };
-        basic.Click += (_, _) => _input.Text = "kyouhacommitsimasita";
-        actions.Controls.Add(basic);
+        var mixed = new Button { Text = "混合入力例", AutoSize = true };
+        mixed.Click += (_, _) => _input.Text =
+            "commitsitade-tawogithubnipushsitekudasai";
+        actions.Controls.Add(mixed);
 
         var node = new Button { Text = "node.js例", AutoSize = true };
         node.Click += (_, _) => _input.Text =
             "demotyottomonndainanoganode.jstoiukotoba";
         actions.Controls.Add(node);
 
-        var real = new Button { Text = "今回の研究例", AutoSize = true };
-        real.Click += (_, _) => _input.Text =
-            "hennkannnikannsitehacommittokanoeigoiretemondainasasoudane demotyottomonndainanoganode.jstoiukotobagabunnkatudekitenainndayone";
-        actions.Controls.Add(real);
+        var open = new Button { Text = "OpenPrefix例", AutoSize = true };
+        open.Click += (_, _) => _input.Text = "commi";
+        actions.Controls.Add(open);
 
-        var export = new Button { Text = "Lattice研究JSONを書き出す", AutoSize = true };
+        var export = new Button { Text = "Mozc責務研究JSONを書き出す", AutoSize = true };
         export.Click += (_, _) => ExportJson();
         actions.Controls.Add(export);
 
@@ -133,7 +140,7 @@ public sealed class MainForm : Form
             Dock = DockStyle.Top,
             ColumnCount = 2
         };
-        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 170));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 190));
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
 
         panel.Controls.Add(new Label
@@ -188,7 +195,10 @@ public sealed class MainForm : Form
             _phonetic.Text = "";
             _bestPath.Text = "";
             _converted.Text = "";
-            _summary.Text = "入力待ち";
+            _summary.Text =
+                _mozc.IsAvailable
+                    ? "入力待ち / Mozc bridge: connected"
+                    : "入力待ち / Mozc bridge: unavailable";
             _paths.DataSource = null;
             _edges.DataSource = null;
             _timeline.DataSource = null;
@@ -210,10 +220,11 @@ public sealed class MainForm : Form
             p.RelativeScore >= -_session.Parameters.AlternativeScoreWindow);
 
         _summary.Text =
+            $"Mozc {(_mozc.IsAvailable ? "connected" : "offline")} / " +
             $"入力 {_result.Input.Length} / committed {_result.CommittedRawLength} / " +
-            $"active {last.ActiveRaw.Length} / lattice edges {last.CandidateEdges.Count} / " +
-            $"competitive paths {altCount} / consensusEnd {last.ConsensusEnd} / " +
-            $"stable {last.ConsensusStableFrames} / expanded {last.ExpandedEdgesThisStep}";
+            $"active {last.ActiveRaw.Length} / edges {last.CandidateEdges.Count} / " +
+            $"paths {altCount} / Mozc probes {last.MozcProbesThisStep} / " +
+            $"consensus {last.ConsensusEnd} / stable {last.ConsensusStableFrames}";
 
         _paths.DataSource = last.TopPaths
             .Take(12)
@@ -240,6 +251,10 @@ public sealed class MainForm : Form
                 Score = e.LocalScore.ToString("F2"),
                 JP = e.JapaneseProfile.ToString("F2"),
                 EN = e.EnglishProfile.ToString("F2"),
+                Mozc = e.MozcQuality < 0
+                    ? "n/a"
+                    : e.MozcQuality.ToString("P0"),
+                e.MozcTopCandidate,
                 e.Evidence
             })
             .ToList();
@@ -252,6 +267,7 @@ public sealed class MainForm : Form
                 Active = f.ActiveRaw.Length,
                 Paths = f.TopPaths.Count,
                 Edges = f.CandidateEdges.Count,
+                f.MozcProbesThisStep,
                 f.ConsensusEnd,
                 f.ConsensusStableFrames,
                 Commits = f.CommitEvents.Count,
@@ -273,7 +289,7 @@ public sealed class MainForm : Form
         using var dialog = new SaveFileDialog
         {
             Filter = "Research JSON (*.json)|*.json",
-            FileName = "boundary-lab-lattice-" +
+            FileName = "boundary-lab-mozc-" +
                 DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json",
             AddExtension = true
         };
@@ -291,7 +307,7 @@ public sealed class MainForm : Form
             new UTF8Encoding(false));
 
         MessageBox.Show(
-            "Evidence Lattice研究データを書き出しました。",
+            "Mozc Responsibility研究データを書き出しました。",
             "Incremental Boundary Lab");
     }
 }

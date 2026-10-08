@@ -7,8 +7,11 @@ public enum LatticeEdgeKind
 {
     JapanesePhonetic,
     JapaneseLexical,
+    JapaneseMozc,
     EnglishLexical,
     LatinStructural,
+    LiteralFallback,
+    OpenPrefix,
     HardBoundary,
     NeutralSymbol,
     BindingSymbol,
@@ -23,7 +26,10 @@ public sealed record EvidenceLatticeParameters(
     double AlternativeScoreWindow = 4.0,
     int CommitLookahead = 3,
     int CommitStabilityFrames = 2,
-    double LanguageSwitchPenalty = 0.30);
+    double LanguageSwitchPenalty = 0.30,
+    int MozcProbeBudget = 18,
+    double MozcScoreWeight = 2.6,
+    double MozcRejectPenalty = 1.2);
 
 public sealed record LatticeEdge(
     int Start,
@@ -35,7 +41,9 @@ public sealed record LatticeEdge(
     double LocalScore,
     double JapaneseProfile,
     double EnglishProfile,
-    string Evidence);
+    string Evidence,
+    double MozcQuality = -1,
+    string? MozcTopCandidate = null);
 
 public sealed record LatticePathSnapshot(
     double Score,
@@ -67,6 +75,8 @@ public sealed record EvidenceLatticeFrame(
     string Output,
     int ExpandedEdgesThisStep,
     long TotalExpandedEdges,
+    int MozcProbesThisStep,
+    bool MozcAvailable,
     bool Rebuilt);
 
 public sealed record EvidenceLatticeResult(

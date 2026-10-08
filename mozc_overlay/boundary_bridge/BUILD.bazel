@@ -1,0 +1,12 @@
+load("//:build_defs.bzl", "mozc_cc_binary")
+
+package(default_visibility = ["//visibility:public"])
+
+mozc_cc_binary(
+    name = "boundary_mozc_bridge",
+    srcs = ["boundary_mozc_bridge.cc"],
+    deps = [
+        "//client:client",
+        "//protocol:commands_cc_proto",
+    ],
+)

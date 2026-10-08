@@ -3,7 +3,7 @@ namespace BoundaryLab.Core;
 public sealed class EvidenceLatticeSession
 {
     public const string AlgorithmVersion =
-        "iblab-evidence-lattice-delayed-commit-v0.5";
+        "iblab-mozc-responsibility-ime-v0.6";
 
     private readonly EvidenceLatticeParameters _parameters;
     private readonly EvidenceLatticeDecoder _decoder;
@@ -16,14 +16,16 @@ public sealed class EvidenceLatticeSession
     private long _totalExpandedEdges;
 
     public EvidenceLatticeSession(
-        EvidenceLatticeParameters? parameters = null)
+        EvidenceLatticeParameters? parameters = null,
+        IMozcConversionOracle? mozc = null)
     {
         _parameters =
             parameters ?? new EvidenceLatticeParameters();
-        _decoder = new EvidenceLatticeDecoder(_parameters);
+        _decoder = new EvidenceLatticeDecoder(_parameters, mozc);
     }
 
     public EvidenceLatticeParameters Parameters => _parameters;
+    public bool MozcAvailable => _decoder.MozcAvailable;
 
     public EvidenceLatticeResult Update(string input)
     {
@@ -76,6 +78,7 @@ public sealed class EvidenceLatticeSession
         var activeRaw = _input[committedBefore..];
         var decode = _decoder.Decode(activeRaw);
         var expanded = decode.ExpandedEdges;
+        var probes = decode.MozcProbes;
         var commits = new List<LatticeCommitEvent>();
 
         var eligible = SelectConsensusPaths(decode.TopPaths);
@@ -83,12 +86,18 @@ public sealed class EvidenceLatticeSession
         var consensusEnd =
             common.Count == 0 ? 0 : common[^1].End;
 
-        var stableCandidate = common
-            .Where(e =>
-                e.End <=
+        LatticeEdge? stableCandidate = null;
+        if (common.Count > 0)
+        {
+            var first = common[0];
+            if (CanCommitByConsensus(first) &&
+                first.End <=
                 activeRaw.Length -
                 _parameters.CommitLookahead)
-            .FirstOrDefault();
+            {
+                stableCandidate = first;
+            }
+        }
 
         var signature = stableCandidate is null
             ? ""
@@ -114,6 +123,7 @@ public sealed class EvidenceLatticeSession
         {
             var hardSegments = best.Edges
                 .Where(e => e.End <= hardCommitEnd)
+                .Select(CloseAtHardBoundary)
                 .ToArray();
 
             if (hardSegments.Length > 0 &&
@@ -156,6 +166,7 @@ public sealed class EvidenceLatticeSession
             displayDecode =
                 _decoder.Decode(displayActive);
             expanded += displayDecode.ExpandedEdges;
+            probes += displayDecode.MozcProbes;
         }
         else
         {
@@ -167,9 +178,6 @@ public sealed class EvidenceLatticeSession
 
         var bestDisplay =
             displayDecode.TopPaths.FirstOrDefault();
-        var activeBest = bestDisplay?.Edges
-            .Select(e => Globalize(e, committedAfter))
-            .ToArray() ?? [];
 
         var output =
             string.Concat(_committed.Select(e => e.Output)) +
@@ -194,6 +202,8 @@ public sealed class EvidenceLatticeSession
             output,
             expanded,
             _totalExpandedEdges,
+            probes,
+            _decoder.MozcAvailable,
             rebuilt));
     }
 
@@ -244,6 +254,34 @@ public sealed class EvidenceLatticeSession
         }
 
         return result;
+    }
+
+    private static bool CanCommitByConsensus(LatticeEdge edge) =>
+        edge.Kind is not (
+            LatticeEdgeKind.Unknown or
+            LatticeEdgeKind.OpenPrefix or
+            LatticeEdgeKind.BindingSymbol) &&
+        (
+            edge.Kind != LatticeEdgeKind.JapaneseMozc ||
+            edge.MozcQuality >= 0.65
+        );
+
+    private static LatticeEdge CloseAtHardBoundary(
+        LatticeEdge edge)
+    {
+        if (edge.Kind is
+            LatticeEdgeKind.Unknown or
+            LatticeEdgeKind.OpenPrefix)
+        {
+            return edge with
+            {
+                Language = LanguageKind.English,
+                Kind = LatticeEdgeKind.LiteralFallback,
+                Evidence = "hard-boundary-literal-close"
+            };
+        }
+
+        return edge;
     }
 
     private void CommitSegments(

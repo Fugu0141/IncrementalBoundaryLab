@@ -90,3 +90,36 @@ Japanese lexical, English lexical, structural Latin, symbol and unknown interpre
 compete in parallel. Only a prefix shared by multiple competitive paths is committed.
 
 See [docs/evidence-lattice-v0.5.md](docs/evidence-lattice-v0.5.md).
+
+
+## v0.6 — Mozc Responsibility IME
+
+The current experimental branch is `experiment/mozc-responsibility-ime-v0.6`.
+
+The decoder now treats the problem as **conversion responsibility routing** rather than
+Japanese word segmentation:
+
+- Japanese spans are evaluated by Mozc,
+- literal/English spans remain raw,
+- incomplete prefixes remain `OpenPrefix`,
+- separators close unresolved tokens explicitly.
+
+Two concrete v0.5 failures are addressed structurally:
+
+- `c / co / commi` can no longer be committed merely because wrong paths agree on an
+  Unknown prefix.
+- `-` is no longer assumed to be Latin; candidates such as `de-ta` compete against
+  a Mozc-backed Japanese interpretation.
+
+See [docs/mozc-integration.md](docs/mozc-integration.md).
+
+### Build the Mozc bridge
+
+```powershell
+.\tools\setup_mozc_bridge.ps1 -UpdateDependencies
+$env:BOUNDARYLAB_MOZC_BRIDGE="$PWD\artifacts\mozc\boundary_mozc_bridge.exe"
+dotnet run --project .\src\BoundaryLab.WinForms\BoundaryLab.WinForms.csproj -c Release
+```
+
+The repository also contains a manual GitHub Actions workflow,
+`build-mozc-bridge`, which builds the native bridge against the pinned Mozc checkout.

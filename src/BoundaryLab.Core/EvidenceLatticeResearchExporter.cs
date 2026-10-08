@@ -9,7 +9,7 @@ public static class EvidenceLatticeResearchExporter
         EvidenceLatticeResult result,
         EvidenceLatticeParameters parameters) =>
         new(
-            "incremental-boundary-lab/evidence-lattice-v1",
+            "incremental-boundary-lab/mozc-responsibility-v1",
             EvidenceLatticeSession.AlgorithmVersion,
             DateTimeOffset.UtcNow,
             result.Input,
@@ -29,7 +29,6 @@ public static class EvidenceLatticeResearchExporter
             PropertyNamingPolicy =
                 JsonNamingPolicy.CamelCase
         };
-
         options.Converters.Add(
             new JsonStringEnumConverter());
 

@@ -1,0 +1,53 @@
+name: build-mozc-bridge
+
+on:
+  workflow_dispatch:
+
+jobs:
+  windows-mozc-bridge:
+    runs-on: windows-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Bazelisk
+        shell: powershell
+        run: choco install bazelisk -y
+
+      - name: Clone pinned Mozc
+        shell: powershell
+        run: |
+          git clone https://github.com/google/mozc.git .external\mozc
+          cd .external\mozc
+          git checkout 921b8cc99904c8d31b771e395513da0a5d55182a
+
+      - name: Fetch Mozc build dependencies
+        shell: powershell
+        working-directory: .external/mozc/src
+        run: python build_tools/update_deps.py
+
+      - name: Install BoundaryLab bridge target
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force .external\mozc\src\boundary_bridge | Out-Null
+          Copy-Item mozc_overlay\boundary_bridge\* .external\mozc\src\boundary_bridge\ -Force
+
+      - name: Build bridge
+        shell: powershell
+        working-directory: .external/mozc/src
+        run: bazelisk build //boundary_bridge:boundary_mozc_bridge --config release_build
+
+      - name: Collect bridge
+        shell: powershell
+        run: |
+          New-Item -ItemType Directory -Force artifacts\mozc | Out-Null
+          Copy-Item .external\mozc\src\bazel-bin\boundary_bridge\boundary_mozc_bridge.exe artifacts\mozc\boundary_mozc_bridge.exe
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: boundary-mozc-bridge
+          path: artifacts/mozc/boundary_mozc_bridge.exe
