@@ -118,6 +118,30 @@ ResponsibilityAnalysis ResponsibilityDecoder::Analyze(std::string_view input) {
       continue;
     }
 
+    // An explicit hard boundary closes an otherwise incomplete English
+    // prefix as literal text. This mirrors the C# responsibility decoder:
+    // "commi " must never turn into Japanese just because the user stopped.
+    std::size_t next_boundary = i;
+    while (next_boundary < raw.size() &&
+           !IsHardBoundary(raw[next_boundary])) {
+      ++next_boundary;
+    }
+    if (next_boundary > i && next_boundary < raw.size()) {
+      const std::string_view token = raw.substr(i, next_boundary - i);
+      if (IsEnglishPrefix(token)) {
+        analysis.spans.push_back(ResponsibilitySpan{
+            .start = i,
+            .end = next_boundary,
+            .raw = std::string(token),
+            .responsibility = Responsibility::kLiteral,
+            .stable = true,
+            .evidence = "hard-boundary-literal-close",
+        });
+        i = next_boundary;
+        continue;
+      }
+    }
+
     const std::string_view tail = raw.substr(i);
     if (IsEnglishPrefix(tail)) {
       analysis.spans.push_back(ResponsibilitySpan{

@@ -115,6 +115,46 @@ TEST(ResponsibilityDecoderTest, FindsLiteralAnchorsInsideMixedSentence) {
   EXPECT_TRUE(saw_push);
 }
 
+TEST(ResponsibilityDecoderTest, HandlesShortEnglishWordsWithJapaneseTail) {
+  FakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+
+  const ResponsibilityAnalysis the = decoder.Analyze("theha");
+  ASSERT_GE(the.spans.size(), 2);
+  EXPECT_EQ(the.spans[0].raw, "the");
+  EXPECT_EQ(the.spans[0].responsibility, Responsibility::kLiteral);
+  EXPECT_TRUE(the.spans[0].stable);
+
+  const ResponsibilityAnalysis then = decoder.Analyze("thenha");
+  ASSERT_GE(then.spans.size(), 2);
+  EXPECT_EQ(then.spans[0].raw, "then");
+  EXPECT_EQ(then.spans[0].responsibility, Responsibility::kLiteral);
+  EXPECT_TRUE(then.spans[0].stable);
+}
+
+TEST(ResponsibilityDecoderTest, KeepsLongEnglishAnchorBeforeJapaneseVerb) {
+  FakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  const ResponsibilityAnalysis analysis = decoder.Analyze("networkmiru");
+
+  ASSERT_GE(analysis.spans.size(), 2);
+  EXPECT_EQ(analysis.spans[0].raw, "network");
+  EXPECT_EQ(analysis.spans[0].responsibility, Responsibility::kLiteral);
+  EXPECT_FALSE(analysis.spans[0].stable);
+  EXPECT_EQ(analysis.spans[1].raw, "miru");
+  EXPECT_EQ(analysis.spans[1].responsibility, Responsibility::kJapanese);
+}
+
+TEST(ResponsibilityDecoderTest, LeavesJapaneseSentenceToMozcResponsibility) {
+  FakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  const ResponsibilityAnalysis analysis =
+      decoder.Analyze("hennkannnikannsiteha");
+
+  ASSERT_EQ(analysis.spans.size(), 1);
+  EXPECT_EQ(analysis.spans[0].responsibility, Responsibility::kJapanese);
+}
+
 TEST(ResponsibilityDecoderTest, HardBoundaryClosesOpenToken) {
   FakeOracle oracle;
   ResponsibilityDecoder decoder(&oracle);
@@ -122,8 +162,9 @@ TEST(ResponsibilityDecoderTest, HardBoundaryClosesOpenToken) {
 
   ASSERT_EQ(analysis.spans.size(), 2);
   EXPECT_EQ(analysis.spans[0].raw, "commi");
-  EXPECT_EQ(analysis.spans[0].responsibility, Responsibility::kJapanese);
+  EXPECT_EQ(analysis.spans[0].responsibility, Responsibility::kLiteral);
   EXPECT_TRUE(analysis.spans[0].stable);
+  EXPECT_EQ(analysis.spans[0].evidence, "hard-boundary-literal-close");
   EXPECT_EQ(analysis.spans[1].responsibility, Responsibility::kBoundary);
 }
 
