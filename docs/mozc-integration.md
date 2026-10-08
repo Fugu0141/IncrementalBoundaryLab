@@ -122,11 +122,38 @@ The bridge expects a compatible Mozc server to be available. For the first real 
 IME prototype, build/install Mozc from the same pinned checkout so the client/server
 protocol versions match.
 
-## Next step: TSF integration
+## Experimental TSF key router status
 
-The bridge intentionally proves the boundary/Mozc contract before modifying the TSF
-front end.
+This branch also has a **native, patched Mozc TSF prototype**, not only the
+standalone bridge. The `tools/apply_mozc_tip_responsibility_patch.ps1` and
+`tools/apply_mozc_tip_key_router_patch.ps1` scripts add responsibility state
+and route eligible ASCII keys before the normal Mozc TSF handler. CI builds
+`mozc_tip64.dll` and runs native decoder, output, and runtime unit tests.
 
-Once the responsibility decoder is stable, the next native step is to move the decoder
-in front of Mozc's Windows TSF key path and reuse the existing Mozc candidate/preedit
-rendering instead of round-tripping through the C# research process.
+**A successful CI build is not proof that the DLL can be safely installed or
+used in real editors.** There is no completed installer/registration workflow
+for an isolated BoundaryLab IME. Do not overwrite an existing Mozc installation
+with the experimental DLL. Test composition, candidate navigation, Escape,
+Backspace, mode changes, and non-ASCII input in a disposable Windows
+environment before considering integration into Meltype.
+
+## Known accuracy and responsiveness limitations
+
+- English recognition currently uses a small static lexicon. Unknown
+  **lowercase** English tokens may still be flushed prematurely to Japanese;
+  this is not solved by the capital-letter regression fix.
+- An unfamiliar token starting with an **uppercase ASCII letter** is now held
+  as a literal candidate rather than speculatively flushed as Japanese.
+  This favors English names/identifiers but can misclassify intentionally
+  capitalized Japanese romaji. Known English lexemes still allow their
+  established Japanese-suffix splits.
+- A mixed-language token can be inherently ambiguous without more context;
+  dictionary word recognition is not sufficient for universal boundary
+  inference. Native unit tests currently rely on a fake Mozc oracle; they do
+  not demonstrate end-to-end conversion quality with a running Mozc server.
+- The C# research bridge enforces a three-second read timeout and disables
+  the child process if it stops replying. This avoids *indefinite* UI hangs;
+  the synchronous probing path can still cause short pauses and requires a
+  proper asynchronous implementation before production use.
+- No latency benchmark or comprehensive real-app TSF compatibility suite
+  has been completed.
