@@ -37,3 +37,22 @@ mozc_cc_test(
         "//testing:gunit_main",
     ],
 )
+
+mozc_cc_library(
+    name = "responsibility_output",
+    srcs = ["responsibility_output.cc"],
+    hdrs = ["responsibility_output.h"],
+    deps = [
+        "//protocol:commands_cc_proto",
+    ],
+)
+
+mozc_cc_test(
+    name = "responsibility_output_test",
+    size = "small",
+    srcs = ["responsibility_output_test.cc"],
+    deps = [
+        ":responsibility_output",
+        "//testing:gunit_main",
+    ],
+)
