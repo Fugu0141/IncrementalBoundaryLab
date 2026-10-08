@@ -44,6 +44,7 @@ namespace tsf {
 '@ @'
 namespace boundarylab {
 class ResponsibilityDecoder;
+class ResponsibilityRuntime;
 }
 
 namespace mozc {
@@ -57,6 +58,7 @@ Replace-Required $Header @'
 '@ @'
   client::ClientInterface* GetClient();
   boundarylab::ResponsibilityDecoder* GetResponsibilityDecoder();
+  boundarylab::ResponsibilityRuntime* GetResponsibilityRuntime();
   SurrogatePairObserver* GetSurrogatePairObserver();
 '@
 
@@ -67,6 +69,7 @@ Replace-Required $Source @'
 #include "protocol/commands.pb.h"
 #include "responsibility/mozc_japanese_oracle.h"
 #include "responsibility/responsibility_decoder.h"
+#include "responsibility/responsibility_runtime.h"
 #include "win32/base/config_snapshot.h"
 '@
 
@@ -84,11 +87,15 @@ class TipPrivateContext::InternalState {
             std::make_unique<boundarylab::MozcJapaneseOracle>()),
         responsibility_decoder_(
             std::make_unique<boundarylab::ResponsibilityDecoder>(
-                responsibility_oracle_.get())) {}
+                responsibility_oracle_.get())),
+        responsibility_runtime_(
+            std::make_unique<boundarylab::ResponsibilityRuntime>(
+                responsibility_decoder_.get())) {}
 
   std::unique_ptr<client::ClientInterface> client_;
   std::unique_ptr<boundarylab::MozcJapaneseOracle> responsibility_oracle_;
   std::unique_ptr<boundarylab::ResponsibilityDecoder> responsibility_decoder_;
+  std::unique_ptr<boundarylab::ResponsibilityRuntime> responsibility_runtime_;
 '@
 
 Replace-Required $Source @'
@@ -107,6 +114,11 @@ TipPrivateContext::GetResponsibilityDecoder() {
   return state_->responsibility_decoder_.get();
 }
 
+boundarylab::ResponsibilityRuntime*
+TipPrivateContext::GetResponsibilityRuntime() {
+  return state_->responsibility_runtime_.get();
+}
+
 void TipPrivateContext::EnsureInitialized() {
 '@
 
@@ -117,7 +129,8 @@ Replace-Required $Build @'
         "//protocol:commands_cc_proto",
         "//responsibility:mozc_japanese_oracle",
         "//responsibility:responsibility_decoder",
+        "//responsibility:responsibility_runtime",
         "//win32/base:config_snapshot",
 '@
 
-Write-Host "Applied BoundaryLab Responsibility state to Mozc TSF TipPrivateContext."
+Write-Host "Applied BoundaryLab Responsibility decoder/runtime state to Mozc TSF TipPrivateContext."
