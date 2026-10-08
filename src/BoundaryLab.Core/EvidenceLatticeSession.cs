@@ -294,6 +294,15 @@ public sealed class EvidenceLatticeSession
         if (selected.Length == 0)
             return [];
 
+        // Keep the old phonetic-lattice behavior when Mozc is unavailable.
+        // Responsibility-mode hard closing relies on Mozc as the independent
+        // Japanese oracle; without it, collapsing unresolved Japanese text to
+        // one literal token is too aggressive.
+        if (!_decoder.MozcAvailable)
+            return selected
+                .Select(CloseAtHardBoundary)
+                .ToArray();
+
         // When the user explicitly types a hard separator after an unresolved
         // open token (e.g. "commi "), that separator closes the token as
         // literal. Do this as one span instead of permanently committing a
