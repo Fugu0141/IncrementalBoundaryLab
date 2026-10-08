@@ -418,12 +418,22 @@ Replace-Required $Source @'
 '@
 
 Replace-Required $Build @'
+        "//client:client_interface",
         "//protocol:commands_cc_proto",
         "//win32/base:conversion_mode_util",
+        "//win32/base:deleter",
+        "//win32/base:input_state",
+        "//win32/base:keyboard",
+        "//win32/base:keyevent_handler",
 '@ @'
+        "//client:client_interface",
         "//protocol:commands_cc_proto",
         "//responsibility:responsibility_runtime",
         "//win32/base:conversion_mode_util",
+        "//win32/base:deleter",
+        "//win32/base:input_state",
+        "//win32/base:keyboard",
+        "//win32/base:keyevent_handler",
 '@
 
 Write-Host "Applied BoundaryLab Responsibility key router to Mozc TSF."
