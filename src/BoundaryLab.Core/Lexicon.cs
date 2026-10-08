@@ -67,6 +67,7 @@ internal static class Lexicon
             ("konna", "こんな", 5.7, "japanese-lexeme"),
             ("konnna", "こんな", 5.6, "japanese-romaji-alias"),
             ("kamo", "かも", 5.4, "japanese-auxiliary"),
+            ("gamenn", "画面", 5.9, "japanese-romaji-alias"),
             ("gamen", "画面", 5.8, "japanese-lexeme"),
             ("menndou", "面倒", 5.7, "japanese-romaji-alias"),
             ("mendou", "面倒", 5.8, "japanese-lexeme"),

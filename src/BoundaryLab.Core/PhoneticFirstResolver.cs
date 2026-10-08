@@ -61,7 +61,14 @@ internal sealed class PhoneticFirstResolver
                          .Where(e => e.Language == LanguageKind.English))
             {
                 var end = start + entry.Raw.Length;
-                var readability = PhoneticProjector.Readability(projection, start, end);
+                // Re-project the candidate in isolation. The global phonetic stream may
+                // consume across the candidate boundary (e.g. commit + asita => "ta"),
+                // which is exactly the ambiguity Stage 2 is supposed to reconsider.
+                var isolatedProjection = PhoneticProjector.Project(entry.Raw);
+                var readability = PhoneticProjector.Readability(
+                    isolatedProjection,
+                    0,
+                    entry.Raw.Length);
                 var anomaly = 1.0 - readability;
                 var lexical = WeightToConfidence(entry.Weight);
                 var score = lexical * 2.0 + anomaly * 2.5 + entry.Raw.Length * 0.03;

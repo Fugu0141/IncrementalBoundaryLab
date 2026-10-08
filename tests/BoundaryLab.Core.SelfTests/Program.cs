@@ -31,8 +31,9 @@ Check(methodCase.CommittedSegments
         .Any(s => s.Raw == "method" &&
                   s.Language == LanguageKind.English),
     "method segment must be English");
-Check(!methodCase.Output.Contains("th", StringComparison.Ordinal),
-    $"method must not degrade into partial raw fragments: {methodCase.Output}");
+Check(methodCase.Output ==
+      "精度はすごくいい感じになったからmethodとしてはこんな感じでいいかも",
+    $"method sentence: {methodCase.Output}");
 
 var longCase = Run(
     "kyouhacommitasitanimotikosunogamenndoudattakarakousitayo");
