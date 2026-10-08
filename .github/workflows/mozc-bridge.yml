@@ -57,13 +57,31 @@ jobs:
           bazelisk build --config release_build //responsibility:mozc_japanese_oracle
           bazelisk build --config release_build //boundary_bridge:boundary_mozc_bridge
 
-      - name: Collect bridge
+      - name: Apply Responsibility state to Mozc TSF
+        shell: powershell
+        run: .\tools\apply_mozc_tip_responsibility_patch.ps1 -MozcDir ".external\mozc"
+
+      - name: Build patched Mozc TSF
+        shell: powershell
+        working-directory: .external/mozc/src
+        run: bazelisk build --config release_build //win32/tip:mozc_tip64
+
+      - name: Collect native artifacts
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force artifacts\mozc | Out-Null
           Copy-Item .external\mozc\src\bazel-bin\boundary_bridge\boundary_mozc_bridge.exe artifacts\mozc\boundary_mozc_bridge.exe
 
+          $Tip = Get-ChildItem .external\mozc\src\bazel-bin -Recurse -Filter mozc_tip64.dll |
+            Select-Object -First 1
+          if (-not $Tip) {
+            throw "mozc_tip64.dll was not found after a successful TSF build."
+          }
+          Copy-Item $Tip.FullName artifacts\mozc\mozc_tip64.dll
+
+          Copy-Item .external\mozc\LICENSE artifacts\mozc\MOZC_LICENSE.txt
+
       - uses: actions/upload-artifact@v4
         with:
-          name: boundary-mozc-bridge
-          path: artifacts/mozc/boundary_mozc_bridge.exe
+          name: boundary-mozc-native
+          path: artifacts/mozc
