@@ -82,8 +82,7 @@ bool ResponsibilityRuntime::CanSpeculativelyFlushJapanese(
   if (span.responsibility != Responsibility::kJapanese ||
       span.stable ||
       span.start != 0 ||
-      span.end != pending_raw_.size() ||
-      pending_raw_.size() <= 1) {
+      span.end != pending_raw_.size()) {
     return false;
   }
 
@@ -129,16 +128,15 @@ ResponsibilityRuntimeUpdate ResponsibilityRuntime::Drain() {
     }
 
     if (CanSpeculativelyFlushJapanese(first)) {
-      // Keep one character of lookahead locally. Mozc's composer is allowed
-      // to receive partial romaji (e.g. "k" then later "a"), so the flushed
-      // Japanese prefix does not need to end on a kana boundary.
-      const std::size_t flush_length = pending_raw_.size() - 1;
+      // The decoder has already ruled out an active English prefix for this
+      // entire pending token. Flush all of it to Mozc immediately. Future
+      // English ambiguity starts from the next character and remains local.
       update.flushes.push_back(ResponsibilityFlush{
-          .raw = pending_raw_.substr(0, flush_length),
+          .raw = pending_raw_,
           .responsibility = Responsibility::kJapanese,
-          .evidence = "japanese-default-one-char-lookahead",
+          .evidence = "japanese-default-immediate-flush",
       });
-      pending_raw_.erase(0, flush_length);
+      pending_raw_.clear();
       continue;
     }
 

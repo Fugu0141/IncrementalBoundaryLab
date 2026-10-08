@@ -69,7 +69,29 @@ TEST(ResponsibilityRuntimeTest, StreamsJapaneseWithSmallLookahead) {
   }
 
   EXPECT_EQ(flushed + update.pending_raw, "nihongo");
-  EXPECT_LE(update.pending_raw.size(), 1);
+  EXPECT_TRUE(update.pending_raw.empty());
+}
+
+TEST(ResponsibilityRuntimeTest, FlushesJapaneseTailImmediatelyAfterLiteral) {
+  RuntimeFakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  ResponsibilityRuntime runtime(&decoder);
+
+  const ResponsibilityRuntimeUpdate update = runtime.Push("commitha");
+
+  std::string literal;
+  std::string japanese;
+  for (const ResponsibilityFlush& span : update.flushes) {
+    if (span.responsibility == Responsibility::kLiteral) {
+      literal += span.raw;
+    } else if (span.responsibility == Responsibility::kJapanese) {
+      japanese += span.raw;
+    }
+  }
+
+  EXPECT_EQ(literal, "commit");
+  EXPECT_EQ(japanese, "ha");
+  EXPECT_TRUE(update.pending_raw.empty());
 }
 
 TEST(ResponsibilityRuntimeTest, DoesNotSpeculateAcrossBindingSymbol) {
