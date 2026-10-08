@@ -39,21 +39,33 @@ internal sealed class PhoneticFirstResolver
                     raw, position, anchor.Start,
                     projection, segments, candidates);
 
+            var orthographic =
+                anchor.Reason == "orthographic-binding-token";
+            var contextual =
+                anchor.Reason.Contains(
+                    "contextual-boundaries",
+                    StringComparison.Ordinal);
+
             segments.Add(new ResolvedSegment(
                 anchor.Start,
                 anchor.End,
                 anchor.Raw,
                 anchor.Output,
                 LanguageKind.English,
-                anchor.Reason == "orthographic-binding-token"
+                orthographic
                     ? 0.98
-                    : Math.Clamp(
-                        0.90 + (1.0 - anchor.PhoneticConfidence) * 0.08,
-                        0, 0.99),
+                    : contextual
+                        ? 0.94
+                        : Math.Clamp(
+                            0.90 +
+                            (1.0 - anchor.PhoneticConfidence) * 0.08,
+                            0, 0.99),
                 false,
-                anchor.Reason == "orthographic-binding-token"
+                orthographic
                     ? "stage2-orthographic-latin-token"
-                    : "stage2-english-from-phonetic-anomaly"));
+                    : contextual
+                        ? "stage2-english-from-context-boundaries"
+                        : "stage2-english-from-phonetic-anomaly"));
             position = anchor.End;
         }
 
@@ -110,22 +122,49 @@ internal sealed class PhoneticFirstResolver
                             anomaly * 2.5 +
                             entry.Raw.Length * 0.03;
 
+                var leftJapaneseBoundary =
+                    HasStrongJapaneseBoundaryBefore(raw, start);
+                var rightJapaneseBoundary =
+                    HasStrongJapaneseBoundaryAfter(raw, end);
+
+                // Some English words are perfectly pronounceable as romaji
+                // (issue, debug, ...). Phonetic anomaly alone cannot recover
+                // them. A longer exact English word surrounded by strong
+                // Japanese boundaries is treated as a code-switch island.
+                // Requiring length >= 5 keeps short ambiguous forms such as
+                // repo/same/make conservative.
+                var contextualRescue =
+                    entry.Raw.Length >= 5 &&
+                    (
+                        (leftJapaneseBoundary &&
+                         (rightJapaneseBoundary || end == raw.Length)) ||
+                        (start == 0 && rightJapaneseBoundary)
+                    );
+
+                var reason =
+                    readability <= _parameters.EnglishAnomalyThreshold
+                        ? "english-dictionary + phonetic-anomaly"
+                        : contextualRescue
+                            ? "english-dictionary + contextual-boundaries"
+                            : "english-dictionary but kana-readable";
+
+                var contextualBonus = contextualRescue ? 2.0 : 0.0;
+
                 var candidate = new ResolutionCandidate(
                     start,
                     end,
                     entry.Raw,
                     entry.Converted,
                     LanguageKind.English,
-                    score,
+                    score + contextualBonus,
                     readability,
                     lexical,
-                    readability <= _parameters.EnglishAnomalyThreshold
-                        ? "english-dictionary + phonetic-anomaly"
-                        : "english-dictionary but kana-readable");
+                    reason);
 
                 allCandidates.Add(candidate);
 
-                if (readability <= _parameters.EnglishAnomalyThreshold)
+                if (readability <= _parameters.EnglishAnomalyThreshold ||
+                    contextualRescue)
                     anchors.Add(candidate);
             }
         }
@@ -410,6 +449,44 @@ internal sealed class PhoneticFirstResolver
         }
 
         return -1;
+    }
+
+    private static bool HasStrongJapaneseBoundaryBefore(
+        string raw,
+        int boundary)
+    {
+        if (boundary <= 0)
+            return false;
+
+        for (var start = 0; start < boundary; start++)
+        {
+            if (Lexicon.ExactAt(raw, start).Any(e =>
+                e.Language == LanguageKind.Japanese &&
+                e.Weight >= 5.2 &&
+                start + e.Raw.Length == boundary))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool HasStrongJapaneseBoundaryAfter(
+        string raw,
+        int boundary)
+    {
+        if (boundary >= raw.Length)
+            return false;
+
+        return Lexicon.ExactAt(raw, boundary).Any(e =>
+            e.Language == LanguageKind.Japanese &&
+            e.Weight >= 5.1 &&
+            (
+                e.Evidence == "japanese-particle" ||
+                e.Evidence == "japanese-verb-suffix" ||
+                e.Evidence == "japanese-auxiliary" ||
+                e.Evidence == "japanese-verb" ||
+                e.Raw.Length >= 3
+            ));
     }
 
     private static bool Overlaps(
