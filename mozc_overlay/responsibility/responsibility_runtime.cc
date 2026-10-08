@@ -42,6 +42,37 @@ ResponsibilityRuntimeUpdate ResponsibilityRuntime::Backspace() {
   return Drain();
 }
 
+ResponsibilityRuntimeUpdate ResponsibilityRuntime::ClosePending() {
+  ResponsibilityRuntimeUpdate update = Drain();
+  if (pending_raw_.empty() || decoder_ == nullptr) {
+    update.pending_raw = pending_raw_;
+    return update;
+  }
+
+  const ResponsibilityAnalysis analysis = decoder_->Analyze(pending_raw_);
+  Responsibility responsibility = Responsibility::kJapanese;
+  std::string evidence = "command-boundary-japanese-close";
+
+  if (!analysis.spans.empty()) {
+    const ResponsibilitySpan& first = analysis.spans.front();
+    if (first.responsibility == Responsibility::kLiteral ||
+        first.responsibility == Responsibility::kOpen) {
+      responsibility = Responsibility::kLiteral;
+      evidence = "command-boundary-literal-close";
+    }
+  }
+
+  update.flushes.push_back(ResponsibilityFlush{
+      .raw = pending_raw_,
+      .responsibility = responsibility,
+      .evidence = evidence,
+  });
+  pending_raw_.clear();
+  update.pending_raw.clear();
+  update.pending_analysis = ResponsibilityAnalysis{};
+  return update;
+}
+
 void ResponsibilityRuntime::Reset() {
   pending_raw_.clear();
 }
@@ -89,7 +120,7 @@ ResponsibilityRuntimeUpdate ResponsibilityRuntime::Drain() {
 
     if (flushable) {
       update.flushes.push_back(ResponsibilityFlush{
-          .raw = first.raw,
+          .raw = pending_raw_.substr(0, first.end),
           .responsibility = first.responsibility,
           .evidence = first.evidence,
       });

@@ -28,6 +28,7 @@ class ResponsibilityRuntime {
   ResponsibilityRuntimeUpdate Push(char c);
   ResponsibilityRuntimeUpdate Push(std::string_view text);
   ResponsibilityRuntimeUpdate Backspace();
+  ResponsibilityRuntimeUpdate ClosePending();
   void Reset();
 
   const std::string& pending_raw() const { return pending_raw_; }

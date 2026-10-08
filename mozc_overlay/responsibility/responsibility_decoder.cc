@@ -136,11 +136,10 @@ ResponsibilityAnalysis ResponsibilityDecoder::Analyze(std::string_view input) {
       const bool has_lookahead = literal.end < raw.size();
       bool stable = has_lookahead;
 
-      if (!literal.structural && has_lookahead &&
-          !IsJapaneseContinuation(raw.substr(literal.end)) &&
-          !IsHardBoundary(raw[literal.end]) &&
-          !IsBindingSymbol(raw[literal.end])) {
-        stable = false;
+      if (!literal.structural && has_lookahead) {
+        stable =
+            IsJapaneseContinuation(raw.substr(literal.end)) ||
+            IsHardBoundary(raw[literal.end]);
       }
 
       analysis.spans.push_back(ResponsibilitySpan{

@@ -104,5 +104,52 @@ TEST(ResponsibilityRuntimeTest, BackspaceOnlyTouchesLocalPendingSuffix) {
   EXPECT_TRUE(update.flushes.empty());
 }
 
+TEST(ResponsibilityRuntimeTest, PreservesStructuralLiteralUntilItIsWhole) {
+  RuntimeFakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  ResponsibilityRuntime runtime(&decoder);
+
+  const ResponsibilityRuntimeUpdate before = runtime.Push("node.");
+  EXPECT_TRUE(before.flushes.empty());
+  EXPECT_EQ(before.pending_raw, "node.");
+
+  const ResponsibilityRuntimeUpdate exact = runtime.Push("js");
+  EXPECT_TRUE(exact.flushes.empty());
+  EXPECT_EQ(exact.pending_raw, "node.js");
+
+  const ResponsibilityRuntimeUpdate closed = runtime.ClosePending();
+  ASSERT_EQ(closed.flushes.size(), 1);
+  EXPECT_EQ(closed.flushes[0].raw, "node.js");
+  EXPECT_EQ(closed.flushes[0].responsibility, Responsibility::kLiteral);
+  EXPECT_TRUE(closed.pending_raw.empty());
+}
+
+TEST(ResponsibilityRuntimeTest, CommandBoundaryClosesIncompleteEnglishAsLiteral) {
+  RuntimeFakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  ResponsibilityRuntime runtime(&decoder);
+
+  runtime.Push("commi");
+  const ResponsibilityRuntimeUpdate closed = runtime.ClosePending();
+
+  ASSERT_EQ(closed.flushes.size(), 1);
+  EXPECT_EQ(closed.flushes[0].raw, "commi");
+  EXPECT_EQ(closed.flushes[0].responsibility, Responsibility::kLiteral);
+  EXPECT_TRUE(closed.pending_raw.empty());
+}
+
+TEST(ResponsibilityRuntimeTest, PreservesOriginalCaseWhenFlushing) {
+  RuntimeFakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  ResponsibilityRuntime runtime(&decoder);
+
+  runtime.Push("Commit");
+  const ResponsibilityRuntimeUpdate closed = runtime.ClosePending();
+
+  ASSERT_EQ(closed.flushes.size(), 1);
+  EXPECT_EQ(closed.flushes[0].raw, "Commit");
+  EXPECT_EQ(closed.flushes[0].responsibility, Responsibility::kLiteral);
+}
+
 }  // namespace
 }  // namespace boundarylab
