@@ -1,0 +1,122 @@
+#include "responsibility/responsibility_runtime.h"
+
+#include <algorithm>
+#include <cctype>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+namespace boundarylab {
+
+ResponsibilityRuntime::ResponsibilityRuntime(ResponsibilityDecoder* decoder)
+    : decoder_(decoder) {}
+
+ResponsibilityRuntimeUpdate ResponsibilityRuntime::Push(char c) {
+  pending_raw_.push_back(c);
+  return Drain();
+}
+
+ResponsibilityRuntimeUpdate ResponsibilityRuntime::Push(
+    std::string_view text) {
+  ResponsibilityRuntimeUpdate combined;
+  for (const char c : text) {
+    ResponsibilityRuntimeUpdate step = Push(c);
+    combined.flushes.insert(
+        combined.flushes.end(),
+        std::make_move_iterator(step.flushes.begin()),
+        std::make_move_iterator(step.flushes.end()));
+  }
+
+  combined.pending_raw = pending_raw_;
+  if (decoder_ != nullptr) {
+    combined.pending_analysis = decoder_->Analyze(pending_raw_);
+  }
+  return combined;
+}
+
+ResponsibilityRuntimeUpdate ResponsibilityRuntime::Backspace() {
+  if (!pending_raw_.empty()) {
+    pending_raw_.pop_back();
+  }
+  return Drain();
+}
+
+void ResponsibilityRuntime::Reset() {
+  pending_raw_.clear();
+}
+
+bool ResponsibilityRuntime::CanSpeculativelyFlushJapanese(
+    const ResponsibilitySpan& span) const {
+  if (span.responsibility != Responsibility::kJapanese ||
+      span.stable ||
+      span.start != 0 ||
+      span.end != pending_raw_.size() ||
+      pending_raw_.size() <= 1) {
+    return false;
+  }
+
+  // Binding symbols can still flip the ownership of the whole token after
+  // more input arrives (de-ta vs node-core), so never speculative-flush them.
+  if (std::any_of(
+          pending_raw_.begin(), pending_raw_.end(),
+          ResponsibilityDecoder::IsBindingSymbol)) {
+    return false;
+  }
+
+  return true;
+}
+
+ResponsibilityRuntimeUpdate ResponsibilityRuntime::Drain() {
+  ResponsibilityRuntimeUpdate update;
+
+  if (decoder_ == nullptr) {
+    update.pending_raw = pending_raw_;
+    return update;
+  }
+
+  while (!pending_raw_.empty()) {
+    ResponsibilityAnalysis analysis = decoder_->Analyze(pending_raw_);
+    if (analysis.spans.empty()) {
+      break;
+    }
+
+    const ResponsibilitySpan& first = analysis.spans.front();
+    const bool flushable =
+        first.stable &&
+        (first.responsibility == Responsibility::kJapanese ||
+         first.responsibility == Responsibility::kLiteral);
+
+    if (flushable) {
+      update.flushes.push_back(ResponsibilityFlush{
+          .raw = first.raw,
+          .responsibility = first.responsibility,
+          .evidence = first.evidence,
+      });
+      pending_raw_.erase(0, first.end);
+      continue;
+    }
+
+    if (CanSpeculativelyFlushJapanese(first)) {
+      // Keep one character of lookahead locally. Mozc's composer is allowed
+      // to receive partial romaji (e.g. "k" then later "a"), so the flushed
+      // Japanese prefix does not need to end on a kana boundary.
+      const std::size_t flush_length = pending_raw_.size() - 1;
+      update.flushes.push_back(ResponsibilityFlush{
+          .raw = pending_raw_.substr(0, flush_length),
+          .responsibility = Responsibility::kJapanese,
+          .evidence = "japanese-default-one-char-lookahead",
+      });
+      pending_raw_.erase(0, flush_length);
+      continue;
+    }
+
+    break;
+  }
+
+  update.pending_raw = pending_raw_;
+  update.pending_analysis = decoder_->Analyze(pending_raw_);
+  return update;
+}
+
+}  // namespace boundarylab

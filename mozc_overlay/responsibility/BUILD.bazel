@@ -56,3 +56,22 @@ mozc_cc_test(
         "//testing:gunit_main",
     ],
 )
+
+mozc_cc_library(
+    name = "responsibility_runtime",
+    srcs = ["responsibility_runtime.cc"],
+    hdrs = ["responsibility_runtime.h"],
+    deps = [
+        ":responsibility_decoder",
+    ],
+)
+
+mozc_cc_test(
+    name = "responsibility_runtime_test",
+    size = "small",
+    srcs = ["responsibility_runtime_test.cc"],
+    deps = [
+        ":responsibility_runtime",
+        "//testing:gunit_main",
+    ],
+)

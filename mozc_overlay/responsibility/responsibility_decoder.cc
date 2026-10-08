@@ -26,10 +26,11 @@ constexpr std::array<std::string_view, 35> kEnglishShortWords = {
     "from", "this", "that", "then", "rust", "jsx", "tsx", "css", "the",
     "and", "for", "or", "js", "ts", "cpp", "csharp", "win", "git"};
 
-constexpr std::array<std::string_view, 24> kJapaneseContinuations = {
+constexpr std::array<std::string_view, 30> kJapaneseContinuations = {
     "shimashita", "simashita", "shimasita", "simasita", "shimasu", "simasu",
     "sareta", "shitai", "sitai", "shite", "site", "shita", "sita", "suru",
-    "kara", "made", "yori", "ha", "wa", "ga", "wo", "ni", "de", "to"};
+    "kara", "made", "yori", "miru", "tsukau", "tukau", "okuru", "tateru",
+    "kakunin", "ha", "wa", "ga", "wo", "ni", "de", "to"};
 
 bool StartsWithAt(std::string_view raw, std::size_t start,
                   std::string_view value) {
