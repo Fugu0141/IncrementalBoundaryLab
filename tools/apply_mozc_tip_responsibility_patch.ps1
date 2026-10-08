@@ -98,6 +98,7 @@ class TipPrivateContext::InternalState {
   std::unique_ptr<boundarylab::MozcJapaneseOracle> responsibility_oracle_;
   std::unique_ptr<boundarylab::ResponsibilityDecoder> responsibility_decoder_;
   std::unique_ptr<boundarylab::ResponsibilityRuntime> responsibility_runtime_;
+  commands::Output responsibility_base_output_;
 '@
 
 Replace-Required $Source @'
