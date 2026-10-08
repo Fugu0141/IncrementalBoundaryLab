@@ -8,6 +8,7 @@ on:
     paths:
       - "mozc_overlay/**"
       - "tools/setup_mozc_bridge.ps1"
+      - "tools/apply_mozc_tip_responsibility_patch.ps1"
       - ".github/workflows/mozc-bridge.yml"
 
 jobs:
