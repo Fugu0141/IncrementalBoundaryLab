@@ -291,22 +291,30 @@ public sealed class EvidenceLatticeSession
             var content = selected.Take(boundaryIndex).ToArray();
             var boundary = selected[boundaryIndex];
 
-            if (content.Length == 1 &&
+            var unresolved =
+                content.Any(e =>
+                    e.Kind is
+                        LatticeEdgeKind.OpenPrefix or
+                        LatticeEdgeKind.Unknown);
+
+            if (content.Length > 0 &&
                 content[0].Start == 0 &&
-                content[0].Kind is
-                    LatticeEdgeKind.OpenPrefix or
-                    LatticeEdgeKind.Unknown)
+                unresolved)
             {
-                var end = content[0].End;
+                var end = boundary.Start;
                 var literalRaw = raw[..end];
-                var literal = content[0] with
-                {
-                    Raw = literalRaw,
-                    Output = literalRaw,
-                    Language = LanguageKind.English,
-                    Kind = LatticeEdgeKind.LiteralFallback,
-                    Evidence = "hard-boundary-literal-close"
-                };
+
+                var literal = new LatticeEdge(
+                    0,
+                    end,
+                    literalRaw,
+                    literalRaw,
+                    LanguageKind.English,
+                    LatticeEdgeKind.LiteralFallback,
+                    0,
+                    -8,
+                    -8,
+                    "hard-boundary-literal-close");
 
                 return [literal, boundary];
             }

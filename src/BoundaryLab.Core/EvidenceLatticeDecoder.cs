@@ -409,7 +409,9 @@ internal sealed class EvidenceLatticeDecoder
             .Select(g => g
                 .OrderByDescending(e => e.LocalScore)
                 .First())
-            .OrderByDescending(e => e.End - e.Start)
+            .OrderByDescending(e =>
+                e.Kind == LatticeEdgeKind.JapaneseMozc)
+            .ThenByDescending(e => e.End - e.Start)
             .ThenByDescending(e => e.LocalScore)
             .Take(_parameters.MozcProbeBudget)
             .ToArray();
