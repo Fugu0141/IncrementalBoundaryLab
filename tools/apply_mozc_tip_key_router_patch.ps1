@@ -113,7 +113,8 @@ bool IsPureModifierVirtualKey(BYTE virtual_key) {
 }
 
 bool HasControlLikeModifier(const KeyEvent& key) {
-  for (const KeyEvent::ModifierKey modifier : key.modifier_keys()) {
+  for (int i = 0; i < key.modifier_keys_size(); ++i) {
+    const KeyEvent::ModifierKey modifier = key.modifier_keys(i);
     switch (modifier) {
       case KeyEvent::CTRL:
       case KeyEvent::ALT:
