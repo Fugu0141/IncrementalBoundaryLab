@@ -11,7 +11,7 @@
 namespace boundarylab {
 namespace {
 
-constexpr std::array<std::string_view, 52> kEnglishWords = {
+constexpr std::array<std::string_view, 50> kEnglishWords = {
     "javascript", "typescript", "network", "windows", "reflect", "function",
     "commit", "github", "kernel", "server", "deploy", "method", "branch",
     "ubuntu", "invite", "google", "object", "client", "output", "input",
@@ -26,7 +26,7 @@ constexpr std::array<std::string_view, 36> kEnglishShortWords = {
     "from", "this", "that", "then", "rust", "jsx", "tsx", "css", "the",
     "and", "for", "or", "js", "ts", "c", "cpp", "csharp", "win", "git"};
 
-constexpr std::array<std::string_view, 25> kJapaneseContinuations = {
+constexpr std::array<std::string_view, 24> kJapaneseContinuations = {
     "shimashita", "simashita", "shimasita", "simasita", "shimasu", "simasu",
     "sareta", "shitai", "sitai", "shite", "site", "shita", "sita", "suru",
     "kara", "made", "yori", "ha", "wa", "ga", "wo", "ni", "de", "to"};
