@@ -155,6 +155,28 @@ TEST(ResponsibilityDecoderTest, LeavesJapaneseSentenceToMozcResponsibility) {
   EXPECT_EQ(analysis.spans[0].responsibility, Responsibility::kJapanese);
 }
 
+TEST(ResponsibilityDecoderTest, DoesNotStealJapaneseWithTwoLetterEnglishWord) {
+  FakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  const ResponsibilityAnalysis analysis = decoder.Analyze("oreha");
+
+  ASSERT_EQ(analysis.spans.size(), 1);
+  EXPECT_EQ(analysis.spans[0].responsibility, Responsibility::kJapanese);
+}
+
+TEST(ResponsibilityDecoderTest, RecognizesCFamilyOnlyStructurally) {
+  FakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+
+  const ResponsibilityAnalysis csharp = decoder.Analyze("c#");
+  ASSERT_EQ(csharp.spans.size(), 1);
+  EXPECT_EQ(csharp.spans[0].responsibility, Responsibility::kLiteral);
+
+  const ResponsibilityAnalysis cpp = decoder.Analyze("c++");
+  ASSERT_EQ(cpp.spans.size(), 1);
+  EXPECT_EQ(cpp.spans[0].responsibility, Responsibility::kLiteral);
+}
+
 TEST(ResponsibilityDecoderTest, HardBoundaryClosesOpenToken) {
   FakeOracle oracle;
   ResponsibilityDecoder decoder(&oracle);

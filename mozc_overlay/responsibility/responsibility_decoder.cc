@@ -20,11 +20,11 @@ constexpr std::array<std::string_view, 50> kEnglishWords = {
     "repo", "with", "from", "this", "that", "then", "rust", "jsx", "tsx",
     "css", "the", "and", "for"};
 
-constexpr std::array<std::string_view, 36> kEnglishShortWords = {
+constexpr std::array<std::string_view, 35> kEnglishShortWords = {
     "api", "bug", "fix", "not", "yes", "can", "but", "node", "json",
     "html", "class", "push", "pull", "code", "test", "repo", "with",
     "from", "this", "that", "then", "rust", "jsx", "tsx", "css", "the",
-    "and", "for", "or", "js", "ts", "c", "cpp", "csharp", "win", "git"};
+    "and", "for", "or", "js", "ts", "cpp", "csharp", "win", "git"};
 
 constexpr std::array<std::string_view, 24> kJapaneseContinuations = {
     "shimashita", "simashita", "shimasita", "simasita", "shimasu", "simasu",
@@ -94,6 +94,42 @@ ResponsibilityAnalysis ResponsibilityDecoder::Analyze(std::string_view input) {
       continue;
     }
 
+    // Incomplete lexical prefixes outrank short exact anchors. Without this,
+    // "commi" could be split as "c | ommi" before "commit" has a chance to
+    // complete. A hard boundary explicitly closes the unresolved token.
+    std::size_t token_end = i;
+    while (token_end < raw.size() && !IsHardBoundary(raw[token_end])) {
+      ++token_end;
+    }
+    const std::string_view unresolved_token =
+        raw.substr(i, token_end - i);
+    if (!unresolved_token.empty() &&
+        !IsEnglishExact(unresolved_token) &&
+        IsEnglishPrefix(unresolved_token)) {
+      if (token_end < raw.size()) {
+        analysis.spans.push_back(ResponsibilitySpan{
+            .start = i,
+            .end = token_end,
+            .raw = std::string(unresolved_token),
+            .responsibility = Responsibility::kLiteral,
+            .stable = true,
+            .evidence = "hard-boundary-literal-close",
+        });
+        i = token_end;
+        continue;
+      }
+
+      analysis.spans.push_back(ResponsibilitySpan{
+          .start = i,
+          .end = token_end,
+          .raw = std::string(unresolved_token),
+          .responsibility = Responsibility::kOpen,
+          .stable = false,
+          .evidence = "open-english-prefix",
+      });
+      break;
+    }
+
     const LiteralCandidate literal = FindLiteralAt(raw, i);
     if (literal.end > i) {
       const bool has_lookahead = literal.end < raw.size();
@@ -128,7 +164,7 @@ ResponsibilityAnalysis ResponsibilityDecoder::Analyze(std::string_view input) {
     }
     if (next_boundary > i && next_boundary < raw.size()) {
       const std::string_view token = raw.substr(i, next_boundary - i);
-      if (IsEnglishPrefix(token)) {
+      if (IsEnglishPrefix(token) || IsEnglishExact(token)) {
         analysis.spans.push_back(ResponsibilitySpan{
             .start = i,
             .end = next_boundary,
@@ -221,9 +257,22 @@ ResponsibilityDecoder::LiteralCandidate ResponsibilityDecoder::FindLiteralAt(
     if (!StartsWithAt(raw, start, word)) {
       continue;
     }
-    if (start + word.size() > best.end) {
+
+    const std::size_t end = start + word.size();
+    if (word.size() <= 3) {
+      const bool right_evidence =
+          end < raw.size() &&
+          (IsHardBoundary(raw[end]) ||
+           IsBindingSymbol(raw[end]) ||
+           IsJapaneseContinuation(raw.substr(end)));
+      if (!right_evidence) {
+        continue;
+      }
+    }
+
+    if (end > best.end) {
       best = {
-          .end = start + word.size(),
+          .end = end,
           .structural = false,
           .evidence = "english-lexeme",
       };
@@ -233,9 +282,22 @@ ResponsibilityDecoder::LiteralCandidate ResponsibilityDecoder::FindLiteralAt(
     if (!StartsWithAt(raw, start, word)) {
       continue;
     }
-    if (start + word.size() > best.end) {
+
+    const std::size_t end = start + word.size();
+    if (word.size() <= 3) {
+      const bool right_evidence =
+          end < raw.size() &&
+          (IsHardBoundary(raw[end]) ||
+           IsBindingSymbol(raw[end]) ||
+           IsJapaneseContinuation(raw.substr(end)));
+      if (!right_evidence) {
+        continue;
+      }
+    }
+
+    if (end > best.end) {
       best = {
-          .end = start + word.size(),
+          .end = end,
           .structural = false,
           .evidence = "english-lexeme",
       };
@@ -256,7 +318,35 @@ ResponsibilityDecoder::LiteralCandidate ResponsibilityDecoder::FindLiteralAt(
     }
 
     const std::string_view left = raw.substr(start, symbol - start);
-    if (!IsEnglishExact(left)) {
+    const bool c_family =
+        left == "c" &&
+        (raw[symbol] == '#' || raw[symbol] == '+');
+    if (!IsEnglishExact(left) && !c_family) {
+      continue;
+    }
+
+    if (left == "c" && raw[symbol] == '#') {
+      const std::size_t end = symbol + 1;
+      if (end > best.end) {
+        best = {
+            .end = end,
+            .structural = true,
+            .evidence = "structural-literal",
+        };
+      }
+      continue;
+    }
+
+    if (left == "c" && raw[symbol] == '+' &&
+        symbol + 1 < raw.size() && raw[symbol + 1] == '+') {
+      const std::size_t end = symbol + 2;
+      if (end > best.end) {
+        best = {
+            .end = end,
+            .structural = true,
+            .evidence = "structural-literal",
+        };
+      }
       continue;
     }
 
