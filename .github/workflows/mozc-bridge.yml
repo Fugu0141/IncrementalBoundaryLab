@@ -52,6 +52,7 @@ jobs:
         run: |
           bazelisk test --config release_build --test_output=errors //responsibility:responsibility_decoder_test
           bazelisk test --config release_build --test_output=errors //responsibility:responsibility_output_test
+          bazelisk test --config release_build --test_output=errors //responsibility:responsibility_runtime_test
 
       - name: Build native Mozc oracle and bridge
         shell: powershell

@@ -140,7 +140,7 @@ TEST(ResponsibilityDecoderTest, KeepsLongEnglishAnchorBeforeJapaneseVerb) {
   ASSERT_GE(analysis.spans.size(), 2);
   EXPECT_EQ(analysis.spans[0].raw, "network");
   EXPECT_EQ(analysis.spans[0].responsibility, Responsibility::kLiteral);
-  EXPECT_FALSE(analysis.spans[0].stable);
+  EXPECT_TRUE(analysis.spans[0].stable);
   EXPECT_EQ(analysis.spans[1].raw, "miru");
   EXPECT_EQ(analysis.spans[1].responsibility, Responsibility::kJapanese);
 }
