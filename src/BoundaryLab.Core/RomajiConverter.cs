@@ -48,58 +48,87 @@ internal static class RomajiConverter
 
         while (i < raw.Length)
         {
-            if (i + 1 < raw.Length &&
-                raw[i] == raw[i + 1] &&
-                raw[i] is not ('a' or 'i' or 'u' or 'e' or 'o' or 'n'))
-            {
-                output.Append('っ');
-                i++;
-                continue;
-            }
-
-            if (raw[i] == 'n')
-            {
-                if (i == raw.Length - 1)
-                {
-                    output.Append('ん');
-                    i++;
-                    continue;
-                }
-
-                var next = raw[i + 1];
-                if (next == 'n')
-                {
-                    output.Append('ん');
-                    i++;
-                    continue;
-                }
-
-                if ("aiueoy".IndexOf(next) < 0)
-                {
-                    output.Append('ん');
-                    i++;
-                    continue;
-                }
-            }
-
-            var matched = false;
-            for (var len = Math.Min(3, raw.Length - i); len >= 1; len--)
-            {
-                var token = raw.Substring(i, len);
-                if (!Map.TryGetValue(token, out var kana))
-                    continue;
-
-                output.Append(kana);
-                i += len;
-                matched = true;
-                break;
-            }
-
-            if (!matched)
+            if (!TryConsume(raw, i, out var consumed, out var kana))
                 return false;
+
+            output.Append(kana);
+            i += consumed;
         }
 
         converted = output.ToString();
         return true;
+    }
+
+    public static bool TryConsume(
+        string raw,
+        int index,
+        out int consumed,
+        out string kana)
+    {
+        consumed = 0;
+        kana = "";
+
+        if (index < 0 || index >= raw.Length)
+            return false;
+
+        if (index + 1 < raw.Length &&
+            raw[index] == raw[index + 1] &&
+            raw[index] is not ('a' or 'i' or 'u' or 'e' or 'o' or 'n'))
+        {
+            consumed = 1;
+            kana = "っ";
+            return true;
+        }
+
+        if (raw[index] == 'n')
+        {
+            if (index + 1 < raw.Length && raw[index + 1] == 'n')
+            {
+                consumed = 2;
+                kana = "ん";
+                return true;
+            }
+
+            if (index == raw.Length - 1)
+            {
+                consumed = 1;
+                kana = "ん";
+                return true;
+            }
+
+            var next = raw[index + 1];
+            if ("aiueoy".IndexOf(next) < 0)
+            {
+                consumed = 1;
+                kana = "ん";
+                return true;
+            }
+        }
+
+        for (var len = Math.Min(3, raw.Length - index); len >= 1; len--)
+        {
+            var token = raw.Substring(index, len);
+            if (!Map.TryGetValue(token, out var mapped))
+                continue;
+
+            consumed = len;
+            kana = mapped;
+            return true;
+        }
+
+        return false;
+    }
+
+    public static bool IsPossiblePrefix(string rawTail)
+    {
+        if (rawTail.Length == 0)
+            return false;
+
+        if (rawTail == "n")
+            return true;
+
+        return Map.Keys.Any(key =>
+            key.Length > rawTail.Length &&
+            key.StartsWith(rawTail, StringComparison.Ordinal));
     }
 }

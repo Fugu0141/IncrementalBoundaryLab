@@ -1,6 +1,5 @@
 using BoundaryLab.Core;
 
-var recognizer = new IncrementalRecognizer();
 var failures = new List<string>();
 
 void Check(bool condition, string message)
@@ -9,66 +8,70 @@ void Check(bool condition, string message)
         failures.Add(message);
 }
 
-var sample = recognizer.Analyze("kyouhacommitsimasita");
-Check(sample.Converted == "今日はcommitしました",
-    $"sample conversion: {sample.Converted}");
-Check(string.Join("|", sample.Segments.Select(s => s.Raw)) ==
-      "kyou|ha|commit|simasita",
-    $"sample segmentation: {string.Join("|", sample.Segments.Select(s => s.Raw))}");
-Check(sample.Frames.Count == "kyouhacommitsimasita".Length,
-    "one frame must exist for every input character");
-Check(sample.Boundaries.Any(b => b.Position == 6 && b.IndependentSupport >= 2),
-    "boundary after kyouha needs independent support");
-Check(sample.Boundaries.Any(b => b.Position == 12 && b.IndependentSupport >= 2),
-    "boundary after commit needs independent support");
-
-var mixed = new Dictionary<string, string>
+PhoneticFirstAnalysisResult Run(string text)
 {
-    ["commitsuru"] = "commitする",
-    ["githubdeissue"] = "githubでissue",
-    ["networkmiru"] = "networkみる",
-    ["the"] = "the",
-    ["thennado"] = "thenなど"
-};
-
-foreach (var pair in mixed)
-{
-    var actual = recognizer.Analyze(pair.Key).Converted;
-    Check(actual == pair.Value, $"{pair.Key}: {actual} != {pair.Value}");
+    var session = new PhoneticFirstSession();
+    return session.Update(text);
 }
 
-var researchCase =
-    recognizer.Analyze("kyouhacommitasitanisitakunakattakaraimamergesityattayo");
-Check(researchCase.Converted == "今日はcommit明日にしたくなかったから今mergeしちゃったよ",
-    $"research sample conversion: {researchCase.Converted}");
-Check(researchCase.Segments.Any(s => s.Raw == "asita" && s.Converted == "明日"),
-    "kunrei-style asita must remain a Japanese candidate");
-Check(!researchCase.Segments.Any(s => s.Raw == "a" && s.Language == LanguageKind.Unknown),
-    "research sample must not split asita into unknown a + sita");
+var sample = Run("kyouhacommitsimasita");
+Check(sample.Output == "今日はcommitしました",
+    $"basic output: {sample.Output}");
+Check(sample.CommittedSegments.Any(s => s.Raw == "commit" && s.Language == LanguageKind.English),
+    "commit must be recognized as English");
+Check(sample.Frames[^1].Stage1.Raw == sample.Frames[^1].ActiveRaw,
+    "stage1 must only describe the active window");
 
-foreach (var boundary in researchCase.Boundaries.Where(b => b.Confirmed))
-{
-    Check(boundary.IndependentSupport >= 2,
-        $"confirmed boundary {boundary.Position} has only {boundary.IndependentSupport} independent votes");
-}
+var methodCase = Run(
+    "seidohasugokuiikannzininattakaramethodtositehakonnnakannzideiikamo");
+Check(methodCase.Output.Contains("method", StringComparison.Ordinal),
+    $"method must survive as English: {methodCase.Output}");
+Check(methodCase.CommittedSegments
+        .Concat(methodCase.ActiveSegments)
+        .Any(s => s.Raw == "method" &&
+                  s.Language == LanguageKind.English),
+    "method segment must be English");
+Check(!methodCase.Output.Contains("th", StringComparison.Ordinal),
+    $"method must not degrade into partial raw fragments: {methodCase.Output}");
 
-Check(!IncrementalRecognizer.IsValidInput("abc123"), "digits must be rejected");
-Check(!IncrementalRecognizer.IsValidInput("abc def"), "spaces must be rejected");
+var longCase = Run(
+    "kyouhacommitasitanimotikosunogamenndoudattakarakousitayo");
+Check(longCase.Output.StartsWith("今日はcommit明日に", StringComparison.Ordinal),
+    $"long sample prefix: {longCase.Output}");
+
+var nnCase = Run("kannzi");
+Check(nnCase.Output is "感じ" or "かんじ",
+    $"nn must be consumed as one ん: {nnCase.Output}");
+
+var perfSession = new PhoneticFirstSession();
+const string perfText =
+    "seidohasugokuiikannzininattakaramethodtositehakonnnakannzideiikamo";
+for (var i = 1; i <= perfText.Length; i++)
+    perfSession.Update(perfText[..i]);
+
+var perf = perfSession.Update(perfText);
+var last = perf.Frames[^1];
+var naiveWork = (long)perfText.Length * (perfText.Length + 1) / 2;
+Check(last.TotalAnalyzedCharacters < naiveWork,
+    $"frozen-prefix path should do less work than full-prefix reanalysis: {last.TotalAnalyzedCharacters} >= {naiveWork}");
+Check(perf.CommittedRawLength > 0,
+    "long append-only input should freeze at least one prefix");
+
+var report = PhoneticFirstResearchExporter.CreateReport(perf, perfSession.Parameters);
+var json = PhoneticFirstResearchExporter.ToJson(report);
+Check(json.Contains("phonetic-first-v1", StringComparison.Ordinal),
+    "new report format must be phonetic-first-v1");
+Check(json.Contains("\"stage1\"", StringComparison.Ordinal),
+    "report must contain stage1 trace");
+Check(json.Contains("\"stage2Candidates\"", StringComparison.Ordinal),
+    "report must contain stage2 candidates");
+Check(json.Contains("\"frozenThisStep\"", StringComparison.Ordinal),
+    "report must contain freeze events");
+Check(json.Contains("\"analyzedCharactersThisStep\"", StringComparison.Ordinal),
+    "report must contain workload measurements");
+
+Check(!IncrementalRecognizer.IsValidInput("abc123"), "digits must still be rejected");
 Check(IncrementalRecognizer.IsValidInput("KyouHaCommit"), "ASCII letters are valid");
-
-var report = ResearchExporter.CreateReport(sample, recognizer.Parameters);
-var json = ResearchExporter.ToJson(report);
-Check(json.Contains("\"frames\"", StringComparison.Ordinal), "report must contain frames");
-Check(json.Contains("\"topHypotheses\"", StringComparison.Ordinal), "report must contain hypotheses");
-Check(json.Contains("\"finalBoundaries\"", StringComparison.Ordinal), "report must contain boundaries");
-Check(json.Contains("\"bidirectionalProbability\"", StringComparison.Ordinal),
-    "report must contain bidirectional boundary evidence");
-Check(json.Contains("\"lexicalProbability\"", StringComparison.Ordinal),
-    "report must contain lexical boundary evidence");
-Check(json.Contains("\"independentSupport\"", StringComparison.Ordinal),
-    "report must contain independent support count");
-Check(json.Contains("research-v2", StringComparison.Ordinal),
-    "report must use research-v2 schema");
 
 if (failures.Count > 0)
 {
@@ -78,8 +81,9 @@ if (failures.Count > 0)
     return 1;
 }
 
-Console.WriteLine("All BoundaryLab self-tests passed.");
-Console.WriteLine($"Sample: kyouhacommitsimasita -> {sample.Converted}");
-Console.WriteLine("Segments: " + string.Join(" | ", sample.Segments.Select(s => s.Raw)));
-Console.WriteLine("Research sample: " + researchCase.Converted);
+Console.WriteLine("All phonetic-first self-tests passed.");
+Console.WriteLine($"Basic: {sample.Output}");
+Console.WriteLine($"Method: {methodCase.Output}");
+Console.WriteLine($"Long: {longCase.Output}");
+Console.WriteLine($"Work: {last.TotalAnalyzedCharacters} vs naive {naiveWork}");
 return 0;

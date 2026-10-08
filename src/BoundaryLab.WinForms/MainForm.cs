@@ -5,24 +5,29 @@ namespace BoundaryLab.WinForms;
 
 public sealed class MainForm : Form
 {
-    private readonly IncrementalRecognizer _recognizer = new();
-    private AnalysisResult _result = new("", "", [], [], []);
+    private readonly PhoneticFirstSession _session = new();
+    private PhoneticFirstAnalysisResult _result =
+        new("", "", 0, [], [], []);
 
     private readonly TextBox _input = new();
-    private readonly TextBox _rawGroups = new();
+    private readonly TextBox _committed = new();
+    private readonly TextBox _active = new();
+    private readonly TextBox _phonetic = new();
+    private readonly TextBox _groups = new();
     private readonly TextBox _converted = new();
     private readonly Label _summary = new();
+
+    private readonly DataGridView _phoneticUnits = Grid();
     private readonly DataGridView _segments = Grid();
-    private readonly DataGridView _boundaries = Grid();
+    private readonly DataGridView _candidates = Grid();
     private readonly DataGridView _timeline = Grid();
-    private readonly DataGridView _hypotheses = Grid();
 
     public MainForm()
     {
-        Text = "Incremental Boundary Lab — consensus v0.2";
-        Width = 1280;
-        Height = 860;
-        MinimumSize = new Size(980, 680);
+        Text = "Incremental Boundary Lab — phonetic-first v0.3";
+        Width = 1320;
+        Height = 900;
+        MinimumSize = new Size(1000, 720);
         StartPosition = FormStartPosition.CenterScreen;
         AutoScaleMode = AutoScaleMode.Dpi;
 
@@ -30,28 +35,25 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 8,
+            RowCount = 11,
             Padding = new Padding(12)
         };
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
-        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+
+        for (var i = 0; i < 9; i++)
+            root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
 
         root.Controls.Add(new Label
         {
-            Text = "ASCII letters only — ローマ字/英単語を空白なしで入力",
+            Text = "Phonetic-first: ①まず音として読む → ②読みにくい部分を英語/日本語へ再解釈 → ③確定prefixを凍結",
             AutoSize = true,
             Font = new Font(Font, FontStyle.Bold)
         });
 
         _input.Dock = DockStyle.Top;
         _input.Font = new Font("Consolas", 15);
-        _input.PlaceholderText = "kyouhacommitsimasita";
+        _input.PlaceholderText = "seidohasugokuiikannzininattakaramethodtositeha...";
         _input.TextChanged += (_, _) => AnalyzeInput();
         _input.KeyPress += (_, e) =>
         {
@@ -60,25 +62,27 @@ public sealed class MainForm : Form
         };
         root.Controls.Add(_input);
 
-        root.Controls.Add(MakeLabeled("推測されたまとまり", _rawGroups));
-        root.Controls.Add(MakeLabeled("変換結果", _converted));
+        root.Controls.Add(MakeLabeled("確定済みprefix", _committed));
+        root.Controls.Add(MakeLabeled("Active Window", _active));
+        root.Controls.Add(MakeLabeled("Stage 1 音写", _phonetic));
+        root.Controls.Add(MakeLabeled("Stage 2 まとまり", _groups));
+        root.Controls.Add(MakeLabeled("最終表示", _converted));
 
         _summary.AutoSize = true;
         _summary.Padding = new Padding(0, 4, 0, 4);
         root.Controls.Add(_summary);
 
-        var hint = new Label
+        root.Controls.Add(new Label
         {
             AutoSize = true,
-            Text = "確定 = Beam / 双方向構造 / 辞書局所 / 時系列安定性の複数系統が合意し、解釈側も独立証拠が2つ以上一致した場合のみ。"
-        };
-        root.Controls.Add(hint);
+            Text = "確定済みprefixは末尾追加時に再解析しません。削除/途中編集時のみ安全のため全履歴を再構築します。"
+        });
 
         var tabs = new TabControl { Dock = DockStyle.Fill };
-        tabs.TabPages.Add(Page("Segments / interpretation", _segments));
-        tabs.TabPages.Add(Page("Boundary consensus", _boundaries));
-        tabs.TabPages.Add(Page("Incremental timeline", _timeline));
-        tabs.TabPages.Add(Page("Top hypotheses", _hypotheses));
+        tabs.TabPages.Add(Page("Stage 1 phonetic units", _phoneticUnits));
+        tabs.TabPages.Add(Page("Stage 2 segments", _segments));
+        tabs.TabPages.Add(Page("Stage 2 candidates", _candidates));
+        tabs.TabPages.Add(Page("Incremental workload", _timeline));
         root.Controls.Add(tabs);
 
         var actions = new FlowLayoutPanel
@@ -88,22 +92,27 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill
         };
 
-        var example = new Button { Text = "基本例", AutoSize = true };
-        example.Click += (_, _) => _input.Text = "kyouhacommitsimasita";
-        actions.Controls.Add(example);
+        var basic = new Button { Text = "基本例", AutoSize = true };
+        basic.Click += (_, _) => _input.Text = "kyouhacommitsimasita";
+        actions.Controls.Add(basic);
 
-        var researchExample = new Button { Text = "長文研究例", AutoSize = true };
-        researchExample.Click += (_, _) =>
-            _input.Text = "kyouhacommitasitanisitakunakattakaraimamergesityattayo";
-        actions.Controls.Add(researchExample);
+        var method = new Button { Text = "method研究例", AutoSize = true };
+        method.Click += (_, _) =>
+            _input.Text = "seidohasugokuiikannzininattakaramethodtositehakonnnakannzideiikamo";
+        actions.Controls.Add(method);
 
-        var export = new Button { Text = "研究データをJSONに書き出す", AutoSize = true };
+        var longExample = new Button { Text = "長文例", AutoSize = true };
+        longExample.Click += (_, _) =>
+            _input.Text = "kyouhacommitasitanimotikosunogamenndoudattakarakousitayo";
+        actions.Controls.Add(longExample);
+
+        var export = new Button { Text = "phonetic-first研究JSONを書き出す", AutoSize = true };
         export.Click += (_, _) => ExportJson();
         actions.Controls.Add(export);
 
         root.Controls.Add(actions);
         Controls.Add(root);
-        AnalyzeInput();
+        Render();
     }
 
     private static DataGridView Grid() => new()
@@ -165,93 +174,94 @@ public sealed class MainForm : Form
             return;
         }
 
-        _result = _recognizer.Analyze(filtered);
+        _result = _session.Update(filtered);
         Render();
     }
 
     private void Render()
     {
-        _rawGroups.Text = string.Join(" | ", _result.Segments.Select(s => s.Raw));
-        _converted.Text = _result.Converted;
-
-        var confirmed = _result.Segments.Count(s => s.Confirmed);
-        _summary.Text = _result.Input.Length == 0
-            ? "入力待ち"
-            : $"文字数: {_result.Input.Length} / セグメント: {_result.Segments.Count} / 確定: {confirmed} / " +
-              $"採用仮説のBeam確率: {_result.Frames[^1].BestHypothesisProbability:P1} / " +
-              $"Ensemble: {_result.Frames[^1].BestEnsembleScore:F2} / " +
-              $"Entropy: {_result.Frames[^1].EntropyBits:F2} bit";
-
-        _segments.DataSource = _result.Segments.Select(s => new
+        if (_result.Frames.Count == 0)
         {
-            Range = $"{s.Start}..{s.End}",
-            s.Raw,
-            s.Converted,
-            Language = s.Language.ToString(),
-            Status = s.Confirmed ? "確定" : "推測",
-            BoundaryConsensus = s.BoundaryConfidence.ToString("P1"),
-            InterpretationConsensus = s.InterpretationConfidence.ToString("P1"),
-            Beam = s.BeamInterpretationConfidence.ToString("P1"),
-            Lexical = s.LexicalInterpretationConfidence.ToString("P1"),
-            Stability = ShowOptional(s.StabilityInterpretationConfidence),
-            Votes = s.IndependentSupport,
-            Class = CertaintyText(s.Certainty)
+            _committed.Text = "";
+            _active.Text = "";
+            _phonetic.Text = "";
+            _groups.Text = "";
+            _converted.Text = "";
+            _summary.Text = "入力待ち";
+            _phoneticUnits.DataSource = null;
+            _segments.DataSource = null;
+            _candidates.DataSource = null;
+            _timeline.DataSource = null;
+            return;
+        }
+
+        var last = _result.Frames[^1];
+        _committed.Text =
+            $"{_result.Input[.._result.CommittedRawLength]}  →  " +
+            string.Concat(_result.CommittedSegments.Select(s => s.Output));
+        _active.Text = last.ActiveRaw;
+        _phonetic.Text = last.Stage1.Preview;
+        _groups.Text = string.Join(
+            " | ",
+            _result.CommittedSegments.Concat(_result.ActiveSegments).Select(s => s.Raw));
+        _converted.Text = _result.Output;
+
+        var total = last.TotalAnalyzedCharacters;
+        var naive = (long)_result.Input.Length * (_result.Input.Length + 1) / 2;
+        var reduction = naive == 0 ? 0 : 1.0 - (double)total / naive;
+
+        _summary.Text =
+            $"入力 {_result.Input.Length}文字 / 確定prefix {_result.CommittedRawLength}文字 / " +
+            $"Active {last.ActiveRaw.Length}文字 / 今回解析 {last.AnalyzedCharactersThisStep}文字 / " +
+            $"累積解析 {total}文字 / 全prefix再解析比 {reduction:P1}削減";
+
+        _phoneticUnits.DataSource = last.Stage1.Units.Select(u => new
+        {
+            Range = $"{u.Start}..{u.End}",
+            u.Raw,
+            u.Preview,
+            Kind = u.Kind.ToString(),
+            Confidence = u.Confidence.ToString("P0"),
+            u.Reason
         }).ToList();
 
-        _boundaries.DataSource = _result.Boundaries.Select(b => new
+        _segments.DataSource = _result.CommittedSegments
+            .Concat(_result.ActiveSegments)
+            .Select(s => new
+            {
+                Range = $"{s.Start}..{s.End}",
+                s.Raw,
+                s.Output,
+                Language = s.Language.ToString(),
+                Status = s.Confirmed ? "Frozen" : "Active",
+                Confidence = s.Confidence.ToString("P1"),
+                s.DecisionReason
+            }).ToList();
+
+        _candidates.DataSource = last.Stage2Candidates.Select(c => new
         {
-            b.Position,
-            Cut = $"{Short(b.Left)} | {Short(b.Right)}",
-            Consensus = b.Probability.ToString("P1"),
-            Beam = b.BeamProbability.ToString("P1"),
-            Bidirectional = b.BidirectionalProbability.ToString("P1"),
-            Lexical = b.LexicalProbability.ToString("P1"),
-            Stability = ShowOptional(b.StabilityProbability),
-            Votes = b.IndependentSupport,
-            Status = b.IsInputEnd ? "入力末尾" : b.Confirmed ? "複数確認済み" : "未確定"
+            Range = $"{c.Start}..{c.End}",
+            c.Raw,
+            c.Output,
+            Language = c.Language.ToString(),
+            Score = c.Score.ToString("F2"),
+            Phonetic = c.PhoneticConfidence.ToString("P1"),
+            Lexical = c.LexicalConfidence.ToString("P1"),
+            c.Reason
         }).ToList();
 
         _timeline.DataSource = _result.Frames.Select(f => new
         {
             f.Step,
-            f.Prefix,
-            Segmentation = f.BestSegmentation,
-            f.Converted,
-            Beam = f.BestHypothesisProbability.ToString("P1"),
-            Ensemble = f.BestEnsembleScore.ToString("F2"),
-            EntropyBits = f.EntropyBits.ToString("F2")
+            f.CommittedRawLength,
+            ActiveLength = f.ActiveRaw.Length,
+            Stage1 = f.Stage1.Preview,
+            f.Output,
+            Work = f.AnalyzedCharactersThisStep,
+            TotalWork = f.TotalAnalyzedCharacters,
+            Frozen = f.FrozenThisStep.Count,
+            f.Rebuilt
         }).ToList();
-
-        var last = _result.Frames.LastOrDefault();
-        _hypotheses.DataSource = last?.TopHypotheses.Select(h => new
-        {
-            BeamProbability = h.Probability.ToString("P2"),
-            Ensemble = h.EnsembleScore.ToString("F2"),
-            BoundaryAgreement = h.BoundaryAgreement.ToString("P1"),
-            LexicalAgreement = h.LexicalAgreement.ToString("P1"),
-            h.Segmentation,
-            h.Converted,
-            Score = h.Score.ToString("F2")
-        }).ToList();
-    }
-
-    private static string ShowOptional(double value) =>
-        value < 0 ? "n/a" : value.ToString("P1");
-
-    private static string CertaintyText(CertaintyClass value) => value switch
-    {
-        CertaintyClass.ClearBoundaryClearInterpretation => "境界○ / 解釈○",
-        CertaintyClass.ClearBoundaryAmbiguousInterpretation => "境界○ / 解釈△",
-        CertaintyClass.AmbiguousBoundaryClearInterpretation => "境界△ / 解釈○",
-        _ => "境界△ / 解釈△"
-    };
-
-    private static string Short(string value)
-    {
-        const int max = 18;
-        if (value.Length <= max)
-            return value;
-        return "…" + value[^max..];
     }
 
     private void ExportJson()
@@ -265,15 +275,22 @@ public sealed class MainForm : Form
         using var dialog = new SaveFileDialog
         {
             Filter = "Research JSON (*.json)|*.json",
-            FileName = $"boundary-lab-{DateTime.Now:yyyyMMdd-HHmmss}.json",
+            FileName = $"boundary-lab-phonetic-first-{DateTime.Now:yyyyMMdd-HHmmss}.json",
             AddExtension = true
         };
 
         if (dialog.ShowDialog(this) != DialogResult.OK)
             return;
 
-        var report = ResearchExporter.CreateReport(_result, _recognizer.Parameters);
-        File.WriteAllText(dialog.FileName, ResearchExporter.ToJson(report), new UTF8Encoding(false));
-        MessageBox.Show("research-v2 JSONを書き出しました。", "Incremental Boundary Lab");
+        var report = PhoneticFirstResearchExporter.CreateReport(
+            _result,
+            _session.Parameters);
+        File.WriteAllText(
+            dialog.FileName,
+            PhoneticFirstResearchExporter.ToJson(report),
+            new UTF8Encoding(false));
+        MessageBox.Show(
+            "phonetic-first研究データを書き出しました。",
+            "Incremental Boundary Lab");
     }
 }

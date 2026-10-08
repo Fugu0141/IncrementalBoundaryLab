@@ -1,44 +1,25 @@
 # IncrementalBoundaryLab
 
-A public C# / WinForms research prototype for testing **incremental word-boundary
-recognition** in space-less mixed Japanese-romaji + English input.
+A public C# / WinForms research project for mixed Japanese-romaji + English input.
 
-The project intentionally does not reuse Meltype's existing language segmentation
-algorithm. The question here is different:
+## Current experiment: phonetic-first v0.3
 
-> If we observe input from left to right, preserve multiple interpretations, and estimate
-> boundary confidence separately from language/conversion confidence, can mixed input be
-> segmented more reliably?
+The current UI uses a new two-stage architecture:
 
-## Example
+1. **Stage 1: phonetic projection** — first try to read the active ASCII input as
+   Japanese romaji and produce hiragana, while explicitly marking unreadable or
+   incomplete ranges.
+2. **Stage 2: boundary/language reinterpretation** — use those phonetic anomalies plus
+   lexical evidence to decide which ranges should stay Japanese and which are English.
 
-Input is restricted to ASCII letters:
+After enough lookahead, high-confidence leading segments are **frozen**. Append-only
+typing never re-analyzes the frozen prefix, so work stays concentrated in a small active
+window.
 
-```text
-kyouhacommitsimasita
-```
+The earlier multi-view consensus v0.2 implementation remains in
+`IncrementalRecognizer.cs` as a baseline for comparison.
 
-Expected current best interpretation:
-
-```text
-kyou | ha | commit | simasita
-今日 | は | commit | しました
-
-今日はcommitしました
-```
-
-The UI shows:
-
-- the current inferred segment groups,
-- the converted string,
-- English / Japanese / unknown classification,
-- confirmed vs provisional segments,
-- boundary confidence,
-- interpretation confidence,
-- the four certainty classes,
-- probability for every candidate boundary,
-- the complete character-by-character recognition timeline,
-- top competing hypotheses.
+See [docs/phonetic-first.md](docs/phonetic-first.md).
 
 ## Run
 
@@ -48,54 +29,47 @@ Windows with .NET 8 SDK:
 dotnet run --project .\src\BoundaryLab.WinForms\BoundaryLab.WinForms.csproj -c Release
 ```
 
-Try:
+Useful research inputs:
 
 ```text
 kyouhacommitsimasita
-commitsuru
+seidohasugokuiikannzininattakaramethodtositehakonnnakannzideiikamo
+kyouhacommitasitanimotikosunogamenndoudattakarakousitayo
 githubdeissue
 networkmiru
 thennado
 ```
 
+## What the UI exposes
+
+- frozen raw/output prefix,
+- current Active Window,
+- Stage 1 hiragana/pending preview,
+- Stage 1 units and confidence,
+- Stage 2 selected groups,
+- all Stage 2 candidates and evidence,
+- final output,
+- per-keystroke active-window workload,
+- cumulative analyzed-character count.
+
 ## Research export
 
-Press **研究データをJSONに書き出す**.
+Press **phonetic-first研究JSONを書き出す**.
 
-One JSON file contains the final answer **and every intermediate frame**. This includes
-all top hypotheses, scores/probabilities, boundary probability at every position,
-segment evidence, confidence, entropy and algorithm parameters.
-
-See [docs/research-data-schema.md](docs/research-data-schema.md).
-
-## Algorithm
-
-The prototype uses a beam of competing segmentations for every input prefix. It then
-normalizes their scores into probabilities and derives two independent confidence axes:
-
-1. boundary confidence,
-2. interpretation confidence.
-
-Those axes produce four states: clear/clear, clear/ambiguous, ambiguous/clear and
-ambiguous/ambiguous.
-
-The input-end boundary is never considered confirmed simply because typing stopped at
-that instant.
-
-See [docs/algorithm.md](docs/algorithm.md).
+The single UTF-8 JSON contains every incremental Stage 1 trace, Stage 2 candidate,
+freeze event and workload counter, so both accuracy and efficiency can be analyzed from
+one file.
 
 ## Tests
-
-No third-party test framework is required:
 
 ```powershell
 dotnet run --project .\tests\BoundaryLab.Core.SelfTests\BoundaryLab.Core.SelfTests.csproj -c Release
 ```
 
-GitHub Actions builds the core on Linux, runs the self-tests, and separately builds the
-WinForms prototype on Windows.
+GitHub Actions builds the core on Linux, runs the self-tests, and builds the WinForms
+prototype on Windows.
 
 ## Status
 
-Research prototype. The built-in lexicon is intentionally small so that behavior remains
-auditable while the boundary model is evaluated.
+Research prototype. The lexicon is intentionally small and transparent while the
+architecture is evaluated.
