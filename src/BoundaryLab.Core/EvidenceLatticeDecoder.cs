@@ -222,6 +222,7 @@ internal sealed class EvidenceLatticeDecoder
                         span,
                         kana,
                         LanguageKind.Japanese,
+                        LatticeEdgeKind.JapanesePhonetic,
                         span.Length -
                         0.55 +
                         advantage * 0.42,
