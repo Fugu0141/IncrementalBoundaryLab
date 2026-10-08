@@ -31,14 +31,21 @@ try {
         }
     }
 
-    $Overlay = Join-Path $RepoRoot "mozc_overlay\boundary_bridge"
-    $Target = Join-Path $MozcDir "src\boundary_bridge"
-    New-Item -ItemType Directory -Force -Path $Target | Out-Null
-    Copy-Item (Join-Path $Overlay "*") $Target -Force
+    $BridgeOverlay = Join-Path $RepoRoot "mozc_overlay\boundary_bridge"
+    $BridgeTarget = Join-Path $MozcDir "src\boundary_bridge"
+    New-Item -ItemType Directory -Force -Path $BridgeTarget | Out-Null
+    Copy-Item (Join-Path $BridgeOverlay "*") $BridgeTarget -Force
+
+    $ResponsibilityOverlay = Join-Path $RepoRoot "mozc_overlay\responsibility"
+    $ResponsibilityTarget = Join-Path $MozcDir "src\responsibility"
+    New-Item -ItemType Directory -Force -Path $ResponsibilityTarget | Out-Null
+    Copy-Item (Join-Path $ResponsibilityOverlay "*") $ResponsibilityTarget -Force
 
     Push-Location (Join-Path $MozcDir "src")
     try {
-        bazelisk build //boundary_bridge:boundary_mozc_bridge --config release_build
+        bazelisk test --config release_build //responsibility:responsibility_decoder_test
+        bazelisk build --config release_build //responsibility:mozc_japanese_oracle
+        bazelisk build --config release_build //boundary_bridge:boundary_mozc_bridge
     }
     finally {
         Pop-Location

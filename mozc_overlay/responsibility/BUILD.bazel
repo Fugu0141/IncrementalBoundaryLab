@@ -1,0 +1,39 @@
+load("//:build_defs.bzl", "mozc_cc_library", "mozc_cc_test")
+
+package(default_visibility = ["//visibility:public"])
+
+mozc_cc_library(
+    name = "japanese_oracle",
+    hdrs = ["japanese_oracle.h"],
+)
+
+mozc_cc_library(
+    name = "responsibility_decoder",
+    srcs = ["responsibility_decoder.cc"],
+    hdrs = ["responsibility_decoder.h"],
+    deps = [
+        ":japanese_oracle",
+    ],
+)
+
+mozc_cc_library(
+    name = "mozc_japanese_oracle",
+    srcs = ["mozc_japanese_oracle.cc"],
+    hdrs = ["mozc_japanese_oracle.h"],
+    deps = [
+        ":japanese_oracle",
+        "//client:client",
+        "//client:client_interface",
+        "//protocol:commands_cc_proto",
+    ],
+)
+
+mozc_cc_test(
+    name = "responsibility_decoder_test",
+    size = "small",
+    srcs = ["responsibility_decoder_test.cc"],
+    deps = [
+        ":responsibility_decoder",
+        "//testing:gunit_main",
+    ],
+)

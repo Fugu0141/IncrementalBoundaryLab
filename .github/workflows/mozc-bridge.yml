@@ -37,16 +37,25 @@ jobs:
         working-directory: .external/mozc/src
         run: python build_tools/update_deps.py
 
-      - name: Install BoundaryLab bridge target
+      - name: Install BoundaryLab Mozc overlays
         shell: powershell
         run: |
           New-Item -ItemType Directory -Force .external\mozc\src\boundary_bridge | Out-Null
+          New-Item -ItemType Directory -Force .external\mozc\src\responsibility | Out-Null
           Copy-Item mozc_overlay\boundary_bridge\* .external\mozc\src\boundary_bridge\ -Force
+          Copy-Item mozc_overlay\responsibility\* .external\mozc\src\responsibility\ -Force
 
-      - name: Build bridge
+      - name: Test native responsibility decoder
         shell: powershell
         working-directory: .external/mozc/src
-        run: bazelisk build //boundary_bridge:boundary_mozc_bridge --config release_build
+        run: bazelisk test --config release_build //responsibility:responsibility_decoder_test
+
+      - name: Build native Mozc oracle and bridge
+        shell: powershell
+        working-directory: .external/mozc/src
+        run: |
+          bazelisk build --config release_build //responsibility:mozc_japanese_oracle
+          bazelisk build --config release_build //boundary_bridge:boundary_mozc_bridge
 
       - name: Collect bridge
         shell: powershell
