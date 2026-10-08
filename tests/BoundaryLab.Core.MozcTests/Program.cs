@@ -59,8 +59,27 @@ Check(node.ActiveBestSegments.Any(e =>
 var mixed = Run(
     "commitsitade-tawogithubnipushsitekudasai",
     mozc);
+var mixedSegments = string.Join(
+    " || ",
+    mixed.CommittedSegments
+        .Concat(mixed.ActiveBestSegments)
+        .Select(e =>
+            $"{e.Start}-{e.End}:{e.Raw}>{e.Output}:{e.Kind}:mozc={e.MozcQuality:F2}"));
+
+var hyphenFrame = mixed.Frames
+    .LastOrDefault(f => f.Input.Contains("de-ta", StringComparison.Ordinal));
+
+var hyphenPaths = hyphenFrame is null
+    ? "<none>"
+    : string.Join(
+        " // ",
+        hyphenFrame.TopPaths.Take(5).Select(p =>
+            $"{p.RelativeScore:F2}:{p.Segmentation}>{p.Output}"));
+
 Check(mixed.Output == "commitしたデータをgithubにpushしてください",
-    "mixed output: " + mixed.Output);
+    "mixed output: " + mixed.Output +
+    " | segments: " + mixedSegments +
+    " | hyphenPaths: " + hyphenPaths);
 
 var hard = Run("commi ", mozc);
 Check(hard.CommittedRawLength == "commi ".Length,
