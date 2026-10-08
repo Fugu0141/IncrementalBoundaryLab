@@ -26,11 +26,12 @@ constexpr std::array<std::string_view, 35> kEnglishShortWords = {
     "from", "this", "that", "then", "rust", "jsx", "tsx", "css", "the",
     "and", "for", "or", "js", "ts", "cpp", "csharp", "win", "git"};
 
-constexpr std::array<std::string_view, 30> kJapaneseContinuations = {
+constexpr std::array<std::string_view, 38> kJapaneseContinuations = {
     "shimashita", "simashita", "shimasita", "simasita", "shimasu", "simasu",
     "sareta", "shitai", "sitai", "shite", "site", "shita", "sita", "suru",
     "kara", "made", "yori", "miru", "tsukau", "tukau", "okuru", "tateru",
-    "kakunin", "ha", "wa", "ga", "wo", "ni", "de", "to"};
+    "kakunin", "ha", "wa", "ga", "wo", "o", "ni", "de", "to", "mo",
+    "he", "no", "yo", "a", "i", "u", "e"};
 
 bool StartsWithAt(std::string_view raw, std::size_t start,
                   std::string_view value) {
@@ -460,6 +461,27 @@ ResponsibilitySpan ResponsibilityDecoder::MakeJapaneseSpan(
   }
 
   return span;
+}
+
+
+bool ResponsibilityDecoder::PrefersJapaneseAtCommandBoundary(
+    std::string_view raw) const {
+  if (raw.empty()) {
+    return false;
+  }
+
+  const std::string normalized = Normalize(raw);
+
+  // Explicit casing is strong literal evidence. This keeps "I", "C", etc.
+  // usable while lowercase romanized particles continue to favor Japanese.
+  if (std::any_of(raw.begin(), raw.end(), [](char c) {
+        const unsigned char u = static_cast<unsigned char>(c);
+        return u < 0x80 && std::isupper(u) != 0;
+      })) {
+    return false;
+  }
+
+  return IsJapaneseContinuation(normalized);
 }
 
 bool ResponsibilityDecoder::IsBindingSymbol(char c) {

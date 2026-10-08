@@ -42,6 +42,7 @@ class ResponsibilityDecoder {
 
   static bool IsBindingSymbol(char c);
   static bool IsHardBoundary(char c);
+  bool PrefersJapaneseAtCommandBoundary(std::string_view raw) const;
 
  private:
   struct LiteralCandidate {

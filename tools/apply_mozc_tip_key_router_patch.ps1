@@ -152,10 +152,16 @@ bool IsResponsibilityRoutingEnabled(
     return false;
   }
 
-  // While Mozc is showing conversion candidates, preserve all normal Mozc
-  // key semantics (candidate navigation, selection, conversion, etc.).
-  if (private_context->responsibility_base_output().has_candidate_window()) {
-    return false;
+  // Plain suggestions are part of normal typing and must not disable the
+  // responsibility router. Conversion/prediction/transliteration windows,
+  // however, have their own navigation/selection semantics and stay entirely
+  // under Mozc control.
+  const Output& base = private_context->responsibility_base_output();
+  if (base.has_candidate_window()) {
+    const commands::Category category = base.candidate_window().category();
+    if (category != commands::SUGGESTION) {
+      return false;
+    }
   }
 
   return true;

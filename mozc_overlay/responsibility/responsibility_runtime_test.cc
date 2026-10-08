@@ -160,6 +160,35 @@ TEST(ResponsibilityRuntimeTest, CommandBoundaryClosesIncompleteEnglishAsLiteral)
   EXPECT_TRUE(closed.pending_raw.empty());
 }
 
+TEST(ResponsibilityRuntimeTest, JapaneseParticlesWinAtCommandBoundary) {
+  RuntimeFakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+
+  for (const std::string raw : {"de", "no", "to", "o", "i"}) {
+    ResponsibilityRuntime runtime(&decoder);
+    runtime.Push(raw);
+    const ResponsibilityRuntimeUpdate closed = runtime.ClosePending();
+
+    ASSERT_EQ(closed.flushes.size(), 1) << raw;
+    EXPECT_EQ(closed.flushes[0].raw, raw);
+    EXPECT_EQ(closed.flushes[0].responsibility, Responsibility::kJapanese)
+        << raw;
+  }
+}
+
+TEST(ResponsibilityRuntimeTest, UppercaseSingleLetterStaysLiteralAtBoundary) {
+  RuntimeFakeOracle oracle;
+  ResponsibilityDecoder decoder(&oracle);
+  ResponsibilityRuntime runtime(&decoder);
+
+  runtime.Push("I");
+  const ResponsibilityRuntimeUpdate closed = runtime.ClosePending();
+
+  ASSERT_EQ(closed.flushes.size(), 1);
+  EXPECT_EQ(closed.flushes[0].raw, "I");
+  EXPECT_EQ(closed.flushes[0].responsibility, Responsibility::kLiteral);
+}
+
 TEST(ResponsibilityRuntimeTest, PreservesOriginalCaseWhenFlushing) {
   RuntimeFakeOracle oracle;
   ResponsibilityDecoder decoder(&oracle);

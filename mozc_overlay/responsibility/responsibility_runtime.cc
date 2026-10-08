@@ -55,10 +55,17 @@ ResponsibilityRuntimeUpdate ResponsibilityRuntime::ClosePending() {
 
   if (!analysis.spans.empty()) {
     const ResponsibilitySpan& first = analysis.spans.front();
-    if (first.responsibility == Responsibility::kLiteral ||
-        first.responsibility == Responsibility::kOpen) {
+    if (first.responsibility == Responsibility::kLiteral) {
       responsibility = Responsibility::kLiteral;
       evidence = "command-boundary-literal-close";
+    } else if (first.responsibility == Responsibility::kOpen) {
+      if (decoder_->PrefersJapaneseAtCommandBoundary(pending_raw_)) {
+        responsibility = Responsibility::kJapanese;
+        evidence = "command-boundary-japanese-grammar-close";
+      } else {
+        responsibility = Responsibility::kLiteral;
+        evidence = "command-boundary-literal-close";
+      }
     }
   }
 
