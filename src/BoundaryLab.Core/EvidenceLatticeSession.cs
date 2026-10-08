@@ -126,7 +126,7 @@ public sealed class EvidenceLatticeSession
                 activeRaw,
                 hardCommitEnd);
 
-            if (hardSegments.Length > 0 &&
+            if (hardSegments.Count > 0 &&
                 hardSegments[^1].End == hardCommitEnd)
             {
                 CommitSegments(

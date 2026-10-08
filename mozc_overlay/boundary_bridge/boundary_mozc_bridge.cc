@@ -3,6 +3,7 @@
 // It intentionally uses Mozc's public client/session protocol instead of
 // duplicating Mozc conversion logic.
 
+#include <algorithm>
 #include <cstdint>
 #include <iostream>
 #include <memory>
