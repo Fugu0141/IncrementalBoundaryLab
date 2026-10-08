@@ -2,7 +2,7 @@ namespace BoundaryLab.Core;
 
 public sealed class IncrementalRecognizer
 {
-    public const string AlgorithmVersion = "iblab-beam-v0.1";
+    public const string AlgorithmVersion = "iblab-consensus-v0.2";
     public RecognizerParameters Parameters { get; }
 
     public IncrementalRecognizer(RecognizerParameters? parameters = null)
@@ -24,23 +24,63 @@ public sealed class IncrementalRecognizer
 
         var frames = new List<IncrementalFrame>(input.Length);
         for (var length = 1; length <= input.Length; length++)
-            frames.Add(AnalyzePrefix(input[..length]));
+            frames.Add(AnalyzePrefix(input[..length], frames));
 
         var last = frames[^1];
         return new AnalysisResult(input, last.Converted, last.Segments, last.Boundaries, frames);
     }
 
-    private IncrementalFrame AnalyzePrefix(string prefix)
+    private IncrementalFrame AnalyzePrefix(
+        string prefix,
+        IReadOnlyList<IncrementalFrame> previousFrames)
     {
         var hypotheses = BeamSearch(prefix);
         var probabilities = Normalize(hypotheses.Select(h => h.Score).ToArray());
-        var snapshots = hypotheses
-            .Select((h, i) => Snapshot(h, probabilities[i]))
+
+        var boundaries = BuildBoundaries(
+            prefix,
+            hypotheses,
+            probabilities,
+            previousFrames);
+
+        var ranked = hypotheses
+            .Select((hypothesis, index) =>
+            {
+                var boundaryAgreement = BoundaryAgreement(hypothesis, prefix.Length, boundaries);
+                var lexicalAgreement = hypothesis.Segments.Count == 0
+                    ? 0
+                    : hypothesis.Segments.Average(EvidenceSupport);
+                var unknownPenalty = hypothesis.Segments.Count(s => s.Language == LanguageKind.Unknown) * 0.55;
+                var ensembleScore =
+                    Math.Log(Math.Max(probabilities[index], 1e-12)) +
+                    boundaryAgreement * 1.45 +
+                    lexicalAgreement * 0.90 -
+                    unknownPenalty;
+
+                return new RankedHypothesis(
+                    hypothesis,
+                    probabilities[index],
+                    ensembleScore,
+                    boundaryAgreement,
+                    lexicalAgreement);
+            })
+            .OrderByDescending(x => x.EnsembleScore)
+            .ThenByDescending(x => x.BeamProbability)
             .ToArray();
 
-        var best = hypotheses[0];
-        var boundaries = BuildBoundaries(prefix, hypotheses, probabilities);
-        var segments = BuildSegments(prefix, best, hypotheses, probabilities, boundaries);
+        var best = ranked[0];
+        var segments = BuildSegments(
+            prefix,
+            best.Hypothesis,
+            hypotheses,
+            probabilities,
+            boundaries,
+            previousFrames);
+
+        var snapshots = ranked
+            .Select(Snapshot)
+            .ToArray();
+
         var entropy = probabilities
             .Where(p => p > 0)
             .Sum(p => -p * Math.Log2(p));
@@ -48,9 +88,10 @@ public sealed class IncrementalRecognizer
         return new IncrementalFrame(
             prefix.Length,
             prefix,
-            string.Join(" | ", best.Segments.Select(s => s.Raw)),
-            string.Concat(best.Segments.Select(s => s.Converted)),
-            probabilities[0],
+            string.Join(" | ", best.Hypothesis.Segments.Select(s => s.Raw)),
+            string.Concat(best.Hypothesis.Segments.Select(s => s.Converted)),
+            best.BeamProbability,
+            best.EnsembleScore,
             entropy,
             segments,
             boundaries,
@@ -175,9 +216,9 @@ public sealed class IncrementalRecognizer
         if (current.Evidence == "japanese-particle")
             score += 0.65;
 
-        if (current.Evidence == "japanese-verb-suffix")
+        if (current.Evidence is "japanese-verb-suffix" or "japanese-romaji-alias")
         {
-            score += previous.Language == LanguageKind.English ? 1.10 : 0.45;
+            score += previous.Language == LanguageKind.English ? 1.05 : 0.40;
         }
 
         if (current.Language == LanguageKind.English &&
@@ -212,37 +253,60 @@ public sealed class IncrementalRecognizer
         return weights.Select(w => w / total).ToArray();
     }
 
-    private static HypothesisSnapshot Snapshot(Hypothesis hypothesis, double probability) =>
+    private HypothesisSnapshot Snapshot(RankedHypothesis ranked) =>
         new(
-            hypothesis.Score,
-            probability,
-            string.Join(" | ", hypothesis.Segments.Select(s => s.Raw)),
-            string.Concat(hypothesis.Segments.Select(s => s.Converted)),
-            hypothesis.Segments.Select(s => new HypothesisSegmentSnapshot(
+            ranked.Hypothesis.Score,
+            ranked.BeamProbability,
+            ranked.EnsembleScore,
+            ranked.BoundaryAgreement,
+            ranked.LexicalAgreement,
+            string.Join(" | ", ranked.Hypothesis.Segments.Select(s => s.Raw)),
+            string.Concat(ranked.Hypothesis.Segments.Select(s => s.Converted)),
+            ranked.Hypothesis.Segments.Select(s => new HypothesisSegmentSnapshot(
                 s.Start, s.End, s.Raw, s.Converted, s.Language,
                 s.Complete, s.Evidence, s.LexicalScore)).ToArray());
 
     private IReadOnlyList<BoundaryEstimate> BuildBoundaries(
         string input,
         IReadOnlyList<Hypothesis> hypotheses,
-        IReadOnlyList<double> probabilities)
+        IReadOnlyList<double> probabilities,
+        IReadOnlyList<IncrementalFrame> previousFrames)
     {
         var result = new List<BoundaryEstimate>();
+        var bidirectional = BuildBidirectionalBoundarySupport(input);
 
         for (var position = 1; position <= input.Length; position++)
         {
-            var probability = 0.0;
+            var beam = 0.0;
             for (var i = 0; i < hypotheses.Count; i++)
             {
                 if (hypotheses[i].Segments.Any(s => s.End == position))
-                    probability += probabilities[i];
+                    beam += probabilities[i];
             }
 
+            var lexical = LexicalBoundarySupport(input, position);
+            var reverse = bidirectional[position];
+            var stability = TemporalBoundarySupport(previousFrames, position);
+
+            var views = new List<double> { beam, reverse, lexical };
+            if (stability.HasValue)
+                views.Add(stability.Value);
+
+            var consensus = views.Average();
+            var support = views.Count(v => v >= Parameters.ConsensusVoteThreshold);
             var isEnd = position == input.Length;
+
             result.Add(new BoundaryEstimate(
                 position,
-                probability,
-                !isEnd && probability >= Parameters.BoundaryClearThreshold,
+                consensus,
+                beam,
+                reverse,
+                lexical,
+                stability ?? -1,
+                support,
+                !isEnd &&
+                consensus >= Parameters.BoundaryClearThreshold &&
+                support >= Parameters.MinimumIndependentSupport,
                 isEnd,
                 input[..position],
                 input[position..]));
@@ -251,18 +315,179 @@ public sealed class IncrementalRecognizer
         return result;
     }
 
+    private double[] BuildBidirectionalBoundarySupport(string input)
+    {
+        var n = input.Length;
+        var byStart = new CandidateSegment[n][];
+        for (var start = 0; start < n; start++)
+            byStart[start] = Candidates(input, start).ToArray();
+
+        var forward = Enumerable.Repeat(double.NegativeInfinity, n + 1).ToArray();
+        var backward = Enumerable.Repeat(double.NegativeInfinity, n + 1).ToArray();
+        forward[0] = 0;
+
+        for (var start = 0; start < n; start++)
+        {
+            if (double.IsNegativeInfinity(forward[start]))
+                continue;
+
+            foreach (var candidate in byStart[start])
+            {
+                var score = forward[start] + StructuralScore(candidate);
+                if (score > forward[candidate.End])
+                    forward[candidate.End] = score;
+            }
+        }
+
+        backward[n] = 0;
+        for (var start = n - 1; start >= 0; start--)
+        {
+            foreach (var candidate in byStart[start])
+            {
+                if (double.IsNegativeInfinity(backward[candidate.End]))
+                    continue;
+
+                var score = StructuralScore(candidate) + backward[candidate.End];
+                if (score > backward[start])
+                    backward[start] = score;
+            }
+        }
+
+        var global = forward[n];
+        var result = new double[n + 1];
+
+        for (var position = 1; position <= n; position++)
+        {
+            if (double.IsNegativeInfinity(forward[position]) ||
+                double.IsNegativeInfinity(backward[position]) ||
+                double.IsNegativeInfinity(global))
+            {
+                result[position] = 0;
+                continue;
+            }
+
+            var gap = forward[position] + backward[position] - global;
+            result[position] = Math.Clamp(Math.Exp(Math.Min(0, gap) / 1.35), 0, 1);
+        }
+
+        return result;
+    }
+
+    private static double StructuralScore(CandidateSegment candidate)
+    {
+        if (candidate.Evidence == "unknown-character")
+            return -4.0;
+        if (!candidate.Complete)
+            return -1.8 + EvidenceSupport(candidate) * 0.4;
+
+        return candidate.LexicalScore +
+               EvidenceSupport(candidate) * 0.8 -
+               0.95;
+    }
+
+    private static double EvidenceSupport(CandidateSegment segment) =>
+        segment.Evidence switch
+        {
+            "english-lexeme" => 0.98,
+            "japanese-lexeme" => 0.98,
+            "japanese-phrase" => 0.98,
+            "japanese-particle" => 0.96,
+            "japanese-auxiliary" => 0.96,
+            "japanese-verb" => 0.96,
+            "japanese-verb-suffix" => 0.96,
+            "japanese-romaji-alias" => 0.93,
+            "romaji-fallback" => 0.50,
+            "lexicon-prefix" => 0.38,
+            "unknown-character" => 0.05,
+            _ => 0.20
+        };
+
+    private static double LexicalBoundarySupport(string input, int position)
+    {
+        if (position <= 0 || position >= input.Length)
+            return 0;
+
+        var left = 0.0;
+        for (var start = 0; start < position; start++)
+        {
+            foreach (var entry in Lexicon.ExactAt(input, start))
+            {
+                if (start + entry.Raw.Length == position)
+                    left = Math.Max(left, WeightToConfidence(entry.Weight));
+            }
+        }
+
+        var right = Lexicon.ExactAt(input, position)
+            .Select(e => WeightToConfidence(e.Weight))
+            .DefaultIfEmpty(0)
+            .Max();
+
+        var rightTail = input[position..];
+        var rightPrefix = Lexicon.PrefixMatches(rightTail)
+            .Select(e => WeightToConfidence(e.Weight) * 0.75)
+            .DefaultIfEmpty(0)
+            .Max();
+
+        right = Math.Max(right, rightPrefix);
+
+        if (left > 0 && right > 0)
+            return Math.Sqrt(left * right);
+
+        return Math.Max(left, right) * 0.35;
+    }
+
+    private static double WeightToConfidence(double weight) =>
+        Math.Clamp((weight - 3.5) / 3.5, 0, 1);
+
+    private double? TemporalBoundarySupport(
+        IReadOnlyList<IncrementalFrame> previousFrames,
+        int position)
+    {
+        var observations = previousFrames
+            .Where(frame => frame.Prefix.Length > position)
+            .TakeLast(Parameters.StabilityWindow)
+            .Select(frame => frame.Boundaries.FirstOrDefault(b => b.Position == position))
+            .Where(boundary => boundary is not null)
+            .Select(boundary => boundary!.BeamProbability)
+            .ToArray();
+
+        if (observations.Length < 2)
+            return null;
+
+        return observations.Average();
+    }
+
+    private static double BoundaryAgreement(
+        Hypothesis hypothesis,
+        int inputLength,
+        IReadOnlyList<BoundaryEstimate> boundaries)
+    {
+        var internalEnds = hypothesis.Segments
+            .Select(s => s.End)
+            .Where(end => end < inputLength)
+            .ToArray();
+
+        if (internalEnds.Length == 0)
+            return 0.5;
+
+        return internalEnds
+            .Select(end => boundaries.First(b => b.Position == end).Probability)
+            .Average();
+    }
+
     private IReadOnlyList<RecognizedSegment> BuildSegments(
         string input,
         Hypothesis best,
         IReadOnlyList<Hypothesis> hypotheses,
         IReadOnlyList<double> probabilities,
-        IReadOnlyList<BoundaryEstimate> boundaries)
+        IReadOnlyList<BoundaryEstimate> boundaries,
+        IReadOnlyList<IncrementalFrame> previousFrames)
     {
         var result = new List<RecognizedSegment>();
 
         foreach (var segment in best.Segments)
         {
-            var interpretation = 0.0;
+            var beamInterpretation = 0.0;
             for (var i = 0; i < hypotheses.Count; i++)
             {
                 if (hypotheses[i].Segments.Any(s =>
@@ -271,15 +496,26 @@ public sealed class IncrementalRecognizer
                     s.Language == segment.Language &&
                     s.Converted == segment.Converted))
                 {
-                    interpretation += probabilities[i];
+                    beamInterpretation += probabilities[i];
                 }
             }
 
+            var lexicalInterpretation = EvidenceSupport(segment);
+            var stabilityInterpretation = TemporalInterpretationSupport(previousFrames, segment);
+
+            var views = new List<double> { beamInterpretation, lexicalInterpretation };
+            if (stabilityInterpretation.HasValue)
+                views.Add(stabilityInterpretation.Value);
+
+            var interpretation = views.Average();
+            var interpretationSupport =
+                views.Count(v => v >= Parameters.ConsensusVoteThreshold);
+
             var boundary = boundaries.First(b => b.Position == segment.End);
-            var boundaryClear = !boundary.IsInputEnd &&
-                                boundary.Probability >= Parameters.BoundaryClearThreshold;
+            var boundaryClear = !boundary.IsInputEnd && boundary.Confirmed;
             var interpretationClear =
-                interpretation >= Parameters.InterpretationClearThreshold;
+                interpretation >= Parameters.InterpretationClearThreshold &&
+                interpretationSupport >= Parameters.MinimumIndependentSupport;
 
             var certainty = (boundaryClear, interpretationClear) switch
             {
@@ -298,11 +534,37 @@ public sealed class IncrementalRecognizer
                 segment.Complete,
                 segment.Complete && boundaryClear && interpretationClear,
                 boundary.Probability,
+                beamInterpretation,
+                lexicalInterpretation,
+                stabilityInterpretation ?? -1,
                 interpretation,
+                interpretationSupport,
                 certainty));
         }
 
         return result;
+    }
+
+    private double? TemporalInterpretationSupport(
+        IReadOnlyList<IncrementalFrame> previousFrames,
+        CandidateSegment segment)
+    {
+        var frames = previousFrames
+            .Where(frame => frame.Prefix.Length > segment.End)
+            .TakeLast(Parameters.StabilityWindow)
+            .ToArray();
+
+        if (frames.Length < 2)
+            return null;
+
+        var matches = frames.Count(frame => frame.Segments.Any(s =>
+            s.Start == segment.Start &&
+            s.End == segment.End &&
+            s.Raw == segment.Raw &&
+            s.Converted == segment.Converted &&
+            s.Language == segment.Language));
+
+        return (double)matches / frames.Length;
     }
 
     private sealed record CandidateSegment(
@@ -318,4 +580,11 @@ public sealed class IncrementalRecognizer
     private sealed record Hypothesis(
         double Score,
         IReadOnlyList<CandidateSegment> Segments);
+
+    private sealed record RankedHypothesis(
+        Hypothesis Hypothesis,
+        double BeamProbability,
+        double EnsembleScore,
+        double BoundaryAgreement,
+        double LexicalAgreement);
 }

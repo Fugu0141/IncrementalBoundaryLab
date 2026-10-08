@@ -9,7 +9,7 @@ public static class ResearchExporter
         AnalysisResult result,
         RecognizerParameters parameters) =>
         new(
-            "incremental-boundary-lab/research-v1",
+            "incremental-boundary-lab/research-v2",
             IncrementalRecognizer.AlgorithmVersion,
             DateTimeOffset.UtcNow,
             result.Input,

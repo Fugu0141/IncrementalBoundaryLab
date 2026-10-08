@@ -20,11 +20,14 @@ public enum CertaintyClass
 }
 
 public sealed record RecognizerParameters(
-    int BeamWidth = 32,
-    int MaxFallbackLength = 12,
-    double BoundaryClearThreshold = 0.82,
-    double InterpretationClearThreshold = 0.72,
-    double SoftmaxTemperature = 1.20);
+    int BeamWidth = 64,
+    int MaxFallbackLength = 16,
+    double BoundaryClearThreshold = 0.68,
+    double InterpretationClearThreshold = 0.68,
+    double ConsensusVoteThreshold = 0.67,
+    int MinimumIndependentSupport = 2,
+    int StabilityWindow = 4,
+    double SoftmaxTemperature = 1.30);
 
 public sealed record RecognizedSegment(
     int Start,
@@ -35,12 +38,21 @@ public sealed record RecognizedSegment(
     bool Complete,
     bool Confirmed,
     double BoundaryConfidence,
+    double BeamInterpretationConfidence,
+    double LexicalInterpretationConfidence,
+    double StabilityInterpretationConfidence,
     double InterpretationConfidence,
+    int IndependentSupport,
     CertaintyClass Certainty);
 
 public sealed record BoundaryEstimate(
     int Position,
     double Probability,
+    double BeamProbability,
+    double BidirectionalProbability,
+    double LexicalProbability,
+    double StabilityProbability,
+    int IndependentSupport,
     bool Confirmed,
     bool IsInputEnd,
     string Left,
@@ -59,6 +71,9 @@ public sealed record HypothesisSegmentSnapshot(
 public sealed record HypothesisSnapshot(
     double Score,
     double Probability,
+    double EnsembleScore,
+    double BoundaryAgreement,
+    double LexicalAgreement,
     string Segmentation,
     string Converted,
     IReadOnlyList<HypothesisSegmentSnapshot> Segments);
@@ -69,6 +84,7 @@ public sealed record IncrementalFrame(
     string BestSegmentation,
     string Converted,
     double BestHypothesisProbability,
+    double BestEnsembleScore,
     double EntropyBits,
     IReadOnlyList<RecognizedSegment> Segments,
     IReadOnlyList<BoundaryEstimate> Boundaries,

@@ -19,10 +19,10 @@ public sealed class MainForm : Form
 
     public MainForm()
     {
-        Text = "Incremental Boundary Lab";
-        Width = 1180;
-        Height = 820;
-        MinimumSize = new Size(900, 650);
+        Text = "Incremental Boundary Lab — consensus v0.2";
+        Width = 1280;
+        Height = 860;
+        MinimumSize = new Size(980, 680);
         StartPosition = FormStartPosition.CenterScreen;
         AutoScaleMode = AutoScaleMode.Dpi;
 
@@ -70,13 +70,13 @@ public sealed class MainForm : Form
         var hint = new Label
         {
             AutoSize = true,
-            Text = "確定 = 境界と解釈の両方が閾値以上。入力末尾の境界は原理上まだ先が続くため確定扱いしません。"
+            Text = "確定 = Beam / 双方向構造 / 辞書局所 / 時系列安定性の複数系統が合意し、解釈側も独立証拠が2つ以上一致した場合のみ。"
         };
         root.Controls.Add(hint);
 
         var tabs = new TabControl { Dock = DockStyle.Fill };
-        tabs.TabPages.Add(Page("Segments", _segments));
-        tabs.TabPages.Add(Page("Boundary probabilities", _boundaries));
+        tabs.TabPages.Add(Page("Segments / interpretation", _segments));
+        tabs.TabPages.Add(Page("Boundary consensus", _boundaries));
         tabs.TabPages.Add(Page("Incremental timeline", _timeline));
         tabs.TabPages.Add(Page("Top hypotheses", _hypotheses));
         root.Controls.Add(tabs);
@@ -88,9 +88,14 @@ public sealed class MainForm : Form
             Dock = DockStyle.Fill
         };
 
-        var example = new Button { Text = "例を入力", AutoSize = true };
+        var example = new Button { Text = "基本例", AutoSize = true };
         example.Click += (_, _) => _input.Text = "kyouhacommitsimasita";
         actions.Controls.Add(example);
+
+        var researchExample = new Button { Text = "長文研究例", AutoSize = true };
+        researchExample.Click += (_, _) =>
+            _input.Text = "kyouhacommitasitanisitakunakattakaraimamergesityattayo";
+        actions.Controls.Add(researchExample);
 
         var export = new Button { Text = "研究データをJSONに書き出す", AutoSize = true };
         export.Click += (_, _) => ExportJson();
@@ -173,8 +178,9 @@ public sealed class MainForm : Form
         _summary.Text = _result.Input.Length == 0
             ? "入力待ち"
             : $"文字数: {_result.Input.Length} / セグメント: {_result.Segments.Count} / 確定: {confirmed} / " +
-              $"最終仮説確率: {_result.Frames[^1].BestHypothesisProbability:P1} / " +
-              $"エントロピー: {_result.Frames[^1].EntropyBits:F2} bit";
+              $"採用仮説のBeam確率: {_result.Frames[^1].BestHypothesisProbability:P1} / " +
+              $"Ensemble: {_result.Frames[^1].BestEnsembleScore:F2} / " +
+              $"Entropy: {_result.Frames[^1].EntropyBits:F2} bit";
 
         _segments.DataSource = _result.Segments.Select(s => new
         {
@@ -183,18 +189,26 @@ public sealed class MainForm : Form
             s.Converted,
             Language = s.Language.ToString(),
             Status = s.Confirmed ? "確定" : "推測",
-            Boundary = s.BoundaryConfidence.ToString("P1"),
-            Interpretation = s.InterpretationConfidence.ToString("P1"),
-            Class = CertaintyText(s.Certainty),
-            s.Complete
+            BoundaryConsensus = s.BoundaryConfidence.ToString("P1"),
+            InterpretationConsensus = s.InterpretationConfidence.ToString("P1"),
+            Beam = s.BeamInterpretationConfidence.ToString("P1"),
+            Lexical = s.LexicalInterpretationConfidence.ToString("P1"),
+            Stability = ShowOptional(s.StabilityInterpretationConfidence),
+            Votes = s.IndependentSupport,
+            Class = CertaintyText(s.Certainty)
         }).ToList();
 
         _boundaries.DataSource = _result.Boundaries.Select(b => new
         {
             b.Position,
             Cut = $"{Short(b.Left)} | {Short(b.Right)}",
-            Probability = b.Probability.ToString("P1"),
-            Status = b.IsInputEnd ? "入力末尾" : b.Confirmed ? "確定候補" : "未確定"
+            Consensus = b.Probability.ToString("P1"),
+            Beam = b.BeamProbability.ToString("P1"),
+            Bidirectional = b.BidirectionalProbability.ToString("P1"),
+            Lexical = b.LexicalProbability.ToString("P1"),
+            Stability = ShowOptional(b.StabilityProbability),
+            Votes = b.IndependentSupport,
+            Status = b.IsInputEnd ? "入力末尾" : b.Confirmed ? "複数確認済み" : "未確定"
         }).ToList();
 
         _timeline.DataSource = _result.Frames.Select(f => new
@@ -203,19 +217,26 @@ public sealed class MainForm : Form
             f.Prefix,
             Segmentation = f.BestSegmentation,
             f.Converted,
-            Best = f.BestHypothesisProbability.ToString("P1"),
+            Beam = f.BestHypothesisProbability.ToString("P1"),
+            Ensemble = f.BestEnsembleScore.ToString("F2"),
             EntropyBits = f.EntropyBits.ToString("F2")
         }).ToList();
 
         var last = _result.Frames.LastOrDefault();
         _hypotheses.DataSource = last?.TopHypotheses.Select(h => new
         {
-            Probability = h.Probability.ToString("P2"),
+            BeamProbability = h.Probability.ToString("P2"),
+            Ensemble = h.EnsembleScore.ToString("F2"),
+            BoundaryAgreement = h.BoundaryAgreement.ToString("P1"),
+            LexicalAgreement = h.LexicalAgreement.ToString("P1"),
             h.Segmentation,
             h.Converted,
             Score = h.Score.ToString("F2")
         }).ToList();
     }
+
+    private static string ShowOptional(double value) =>
+        value < 0 ? "n/a" : value.ToString("P1");
 
     private static string CertaintyText(CertaintyClass value) => value switch
     {
@@ -253,6 +274,6 @@ public sealed class MainForm : Form
 
         var report = ResearchExporter.CreateReport(_result, _recognizer.Parameters);
         File.WriteAllText(dialog.FileName, ResearchExporter.ToJson(report), new UTF8Encoding(false));
-        MessageBox.Show("研究データを書き出しました。", "Incremental Boundary Lab");
+        MessageBox.Show("research-v2 JSONを書き出しました。", "Incremental Boundary Lab");
     }
 }
