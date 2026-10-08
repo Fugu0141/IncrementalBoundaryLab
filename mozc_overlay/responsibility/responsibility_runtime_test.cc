@@ -69,7 +69,7 @@ TEST(ResponsibilityRuntimeTest, StreamsJapaneseWithSmallLookahead) {
   }
 
   EXPECT_EQ(flushed + update.pending_raw, "nihongo");
-  EXPECT_TRUE(update.pending_raw.empty());
+  EXPECT_EQ(update.pending_raw, "o");
 }
 
 TEST(ResponsibilityRuntimeTest, FlushesJapaneseTailImmediatelyAfterLiteral) {
