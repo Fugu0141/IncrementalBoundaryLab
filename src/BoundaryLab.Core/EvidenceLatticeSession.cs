@@ -282,7 +282,7 @@ public sealed class EvidenceLatticeSession
         return true;
     }
 
-    private static IReadOnlyList<LatticeEdge> ClosePathAtHardBoundary(
+    private IReadOnlyList<LatticeEdge> ClosePathAtHardBoundary(
         IReadOnlyList<LatticeEdge> path,
         string raw,
         int hardCommitEnd)
