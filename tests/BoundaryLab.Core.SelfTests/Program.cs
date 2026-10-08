@@ -58,14 +58,14 @@ Check(IncrementalRecognizer.IsValidInput("KyouHaCommit"), "ASCII letters are val
 
 var report = ResearchExporter.CreateReport(sample, recognizer.Parameters);
 var json = ResearchExporter.ToJson(report);
-Check(json.Contains(""frames"", StringComparison.Ordinal), "report must contain frames");
-Check(json.Contains(""topHypotheses"", StringComparison.Ordinal), "report must contain hypotheses");
-Check(json.Contains(""finalBoundaries"", StringComparison.Ordinal), "report must contain boundaries");
-Check(json.Contains(""bidirectionalProbability"", StringComparison.Ordinal),
+Check(json.Contains("\"frames\"", StringComparison.Ordinal), "report must contain frames");
+Check(json.Contains("\"topHypotheses\"", StringComparison.Ordinal), "report must contain hypotheses");
+Check(json.Contains("\"finalBoundaries\"", StringComparison.Ordinal), "report must contain boundaries");
+Check(json.Contains("\"bidirectionalProbability\"", StringComparison.Ordinal),
     "report must contain bidirectional boundary evidence");
-Check(json.Contains(""lexicalProbability"", StringComparison.Ordinal),
+Check(json.Contains("\"lexicalProbability\"", StringComparison.Ordinal),
     "report must contain lexical boundary evidence");
-Check(json.Contains(""independentSupport"", StringComparison.Ordinal),
+Check(json.Contains("\"independentSupport\"", StringComparison.Ordinal),
     "report must contain independent support count");
 Check(json.Contains("research-v2", StringComparison.Ordinal),
     "report must use research-v2 schema");
