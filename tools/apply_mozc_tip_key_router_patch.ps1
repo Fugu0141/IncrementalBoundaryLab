@@ -46,6 +46,7 @@ Replace-Required $Source @'
 #include <memory>
 #include <string>
 #include <string_view>
+#include <utility>
 '@
 
 Replace-Required $Source @'
@@ -315,10 +316,6 @@ Replace-Required $Source @'
 
       if (vk.virtual_key() == VK_ESCAPE && !runtime->pending_raw().empty()) {
         runtime->Reset();
-        boundarylab::ResponsibilityRuntimeUpdate update;
-        update.pending_raw.clear();
-        return RenderResponsibilityUpdate(
-            text_service, context, private_context, update, eaten);
       }
 
       char responsibility_char = 0;
