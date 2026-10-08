@@ -9,6 +9,7 @@ on:
       - "mozc_overlay/**"
       - "tools/setup_mozc_bridge.ps1"
       - "tools/apply_mozc_tip_responsibility_patch.ps1"
+      - "tools/apply_mozc_tip_key_router_patch.ps1"
       - ".github/workflows/mozc-bridge.yml"
 
 jobs:
@@ -64,6 +65,10 @@ jobs:
       - name: Apply Responsibility state to Mozc TSF
         shell: powershell
         run: .\tools\apply_mozc_tip_responsibility_patch.ps1 -MozcDir ".external\mozc"
+
+      - name: Apply Responsibility key router to Mozc TSF
+        shell: powershell
+        run: .\tools\apply_mozc_tip_key_router_patch.ps1 -MozcDir ".external\mozc"
 
       - name: Build patched Mozc TSF
         shell: powershell
