@@ -139,6 +139,28 @@ bool IsResponsibilityAscii(char c) {
   return kResponsibilitySymbols.find(c) != std::string_view::npos;
 }
 
+bool IsResponsibilityRoutingEnabled(
+    TipTextService* text_service, TipPrivateContext* private_context) {
+  if (text_service == nullptr || private_context == nullptr) {
+    return false;
+  }
+
+  const TipInputModeManager* input_mode_manager =
+      text_service->GetThreadContext()->GetInputModeManager();
+  if (input_mode_manager == nullptr ||
+      input_mode_manager->GetEffectiveConversionMode() != commands::HIRAGANA) {
+    return false;
+  }
+
+  // While Mozc is showing conversion candidates, preserve all normal Mozc
+  // key semantics (candidate navigation, selection, conversion, etc.).
+  if (private_context->responsibility_base_output().has_candidate_window()) {
+    return false;
+  }
+
+  return true;
+}
+
 bool TryGetResponsibilityAscii(
     const VirtualKey& virtual_key, BYTE scan_code, bool is_key_down,
     bool is_menu_active, const KeyboardStatus& keyboard_status,
@@ -267,7 +289,7 @@ Replace-Required $Source @'
   std::unique_ptr<Win32KeyboardInterface> keyboard(
       Win32KeyboardInterface::CreateDefault());
 
-  if (open) {
+  if (open && IsResponsibilityRoutingEnabled(text_service, private_context)) {
     boundarylab::ResponsibilityRuntime* runtime =
         private_context->GetResponsibilityRuntime();
 
@@ -307,7 +329,8 @@ Replace-Required $Source @'
     boundarylab::ResponsibilityRuntime* runtime =
         private_context->GetResponsibilityRuntime();
 
-    if (open && is_key_down && runtime != nullptr) {
+    if (open && is_key_down && runtime != nullptr &&
+        IsResponsibilityRoutingEnabled(text_service, private_context)) {
       if (vk.virtual_key() == VK_BACK && !runtime->pending_raw().empty()) {
         const boundarylab::ResponsibilityRuntimeUpdate update =
             runtime->Backspace();
@@ -317,6 +340,18 @@ Replace-Required $Source @'
 
       if (vk.virtual_key() == VK_ESCAPE && !runtime->pending_raw().empty()) {
         runtime->Reset();
+
+        const Output& base = private_context->responsibility_base_output();
+        const bool server_has_preedit =
+            base.has_preedit() && base.preedit().segment_size() > 0;
+
+        if (!server_has_preedit) {
+          boundarylab::ResponsibilityRuntimeUpdate cleared;
+          return RenderResponsibilityUpdate(
+              text_service, context, private_context, cleared, eaten);
+        }
+        // If Mozc already owns stable text, fall through so the normal Escape
+        // path cancels the server-side composition as well.
       }
 
       char responsibility_char = 0;
