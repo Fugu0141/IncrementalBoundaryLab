@@ -1,5 +1,29 @@
 # IncrementalBoundaryLab
 
+## New research experiment: Stream Hybrid v1.2
+
+This branch fixes a **code token boundary connectivity** bug: `node.js`
+already existed as a candidate, but the preceding Japanese phonetic span
+was not allowed to end immediately before `node`. The engine now passes
+code-start evidence into kana candidate generation. See
+[the v1.2 boundary study](research/stream-hybrid-v1.2-code-boundaries.md).
+
+Windows CMD:
+
+```bat
+git fetch origin
+git switch experiment/stream-hybrid-v1.2
+git pull --ff-only
+set "BOUNDARYLAB_ENGINE=v1"
+set "BOUNDARYLAB_STREAM_MOZC="
+dotnet run --project .\src\BoundaryLab.WinForms\BoundaryLab.WinForms.csproj -c Release
+```
+
+Look for title `Stream Hybrid v1.2 (shared code/phonetic boundaries)`.
+The project is a standalone experimental GUI, not an installed Windows IME.
+For offline A/B evaluation leave synchronous Mozc probes disabled.
+
+
 ## Current research experiment: Stream Hybrid v1.1
 
 This branch `experiment/stream-hybrid-v1.1` fixes two actual offline
