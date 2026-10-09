@@ -14,6 +14,7 @@ public sealed class MainForm : Form
     private readonly TextBox _committed = new();
     private readonly TextBox _active = new();
     private readonly TextBox _phonetic = new();
+    private readonly TextBox _phoneticStructure = new();
     private readonly TextBox _bestPath = new();
     private readonly TextBox _converted = new();
     private readonly Label _summary = new();
@@ -21,6 +22,7 @@ public sealed class MainForm : Form
     private readonly DataGridView _paths = Grid();
     private readonly DataGridView _edges = Grid();
     private readonly DataGridView _timeline = Grid();
+    private readonly DataGridView _fourState = Grid();
 
     public MainForm()
     {
@@ -34,7 +36,7 @@ public sealed class MainForm : Form
 
         Text = "Incremental Boundary Lab — " +
             (_session.Parameters.UsePhoneticFirstHybrid
-                ? "Phonetic-first Hybrid v0.7 (experimental)"
+                ? "Four-state Phonetic Hybrid v0.8 (research diagnostics)"
                 : "Mozc Responsibility IME v0.6 baseline");
         Width = 1460;
         Height = 940;
@@ -48,11 +50,11 @@ public sealed class MainForm : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 11,
+            RowCount = 12,
             Padding = new Padding(12)
         };
 
-        for (var i = 0; i < 9; i++)
+        for (var i = 0; i < 10; i++)
             root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
@@ -60,7 +62,7 @@ public sealed class MainForm : Form
         root.Controls.Add(new Label
         {
             Text = _session.Parameters.UsePhoneticFirstHybrid
-                ? "v0.7 hybrid: 左からのかな投影を追加根拠に使用。確定はEvidence Latticeが管理"
+                ? "v0.8: かなのまとまり/切れ目を確定・曖昧に分類。暫定的な研究注釈であり確定操作は変更しません"
                 : "v0.6 baseline: 日本語/英語の責務境界をEvidence Latticeで推定",
             AutoSize = true,
             Font = new Font(Font, FontStyle.Bold)
@@ -82,6 +84,7 @@ public sealed class MainForm : Form
         root.Controls.Add(MakeLabeled("Committed prefix", _committed));
         root.Controls.Add(MakeLabeled("Active Window", _active));
         root.Controls.Add(MakeLabeled("Phonetic preview", _phonetic));
+        root.Controls.Add(MakeLabeled("Phonetic 4-state", _phoneticStructure));
         root.Controls.Add(MakeLabeled("Best responsibility path", _bestPath));
         root.Controls.Add(MakeLabeled("Mozc-aware preview", _converted));
 
@@ -99,6 +102,7 @@ public sealed class MainForm : Form
         tabs.TabPages.Add(Page("Top hypotheses", _paths));
         tabs.TabPages.Add(Page("Responsibility / Mozc edges", _edges));
         tabs.TabPages.Add(Page("Commit / workload", _timeline));
+        tabs.TabPages.Add(Page("Phonetic four-state", _fourState));
         root.Controls.Add(tabs);
 
         var actions = new FlowLayoutPanel
@@ -203,6 +207,7 @@ public sealed class MainForm : Form
             _committed.Text = "";
             _active.Text = "";
             _phonetic.Text = "";
+            _phoneticStructure.Text = "";
             _bestPath.Text = "";
             _converted.Text = "";
             _summary.Text =
@@ -212,6 +217,7 @@ public sealed class MainForm : Form
             _paths.DataSource = null;
             _edges.DataSource = null;
             _timeline.DataSource = null;
+            _fourState.DataSource = null;
             return;
         }
 
@@ -223,6 +229,14 @@ public sealed class MainForm : Form
             _result.CommittedSegments.Select(s => s.Raw));
         _active.Text = last.ActiveRaw;
         _phonetic.Text = last.PhoneticPreview;
+        var structure = last.PhoneticStructure;
+        _phoneticStructure.Text = structure is null
+            ? "(disabled in baseline mode)"
+            : $"group 確定 {structure.Groups.Count(g => g.Status == PhoneticEvidenceStatus.Confirmed)} / " +
+              $"曖昧 {structure.Groups.Count(g => g.Status == PhoneticEvidenceStatus.Tentative)}, " +
+              $"cut 確定 {structure.Boundaries.Count(b => b.Status == PhoneticEvidenceStatus.Confirmed)} / " +
+              $"曖昧 {structure.Boundaries.Count(b => b.Status == PhoneticEvidenceStatus.Tentative)}, " +
+              $"前後再検討 {structure.ReviewWindows.Count}";
         _bestPath.Text = best?.Segmentation ?? "";
         _converted.Text = _result.Output;
 
