@@ -59,10 +59,19 @@ internal sealed class StreamHybridDecoder
         // The same raw coordinates are shared by phonetic, dictionary,
         // unknown-language and punctuation evidence. No early ownership.
         AddLexical(raw, candidate);
-        AddKanaRuns(raw, candidate);
+        // Structural code spans own the boundary evidence. Generate them
+        // BEFORE phonetic runs so the Japanese side can stop precisely at
+        // the beginning of a viable identifier such as node.js.
+        AddStructuralCodes(raw, candidate);
+        var codeStarts = new HashSet<int>();
+        for (var i = 0; i < candidate.Length; i++)
+        {
+            if (candidate[i].Any(e => e.Kind == LatticeEdgeKind.LatinStructural))
+                codeStarts.Add(i);
+        }
+        AddKanaRuns(raw, candidate, codeStarts);
         AddUnknownLatinIslands(raw, projection, candidate);
         AddPunctuation(raw, candidate);
-        AddStructuralCodes(raw, candidate);
         AddLongVowels(raw, candidate);
 
         var flattened = new List<LatticeEdge>();
@@ -231,7 +240,8 @@ internal sealed class StreamHybridDecoder
         }
     }
 
-    private static void AddKanaRuns(string raw, List<LatticeEdge>[] dst)
+    private static void AddKanaRuns(
+        string raw, List<LatticeEdge>[] dst, IReadOnlySet<int> codeStarts)
     {
         for (var start = 0; start < raw.Length; start++)
         {
@@ -259,14 +269,28 @@ internal sealed class StreamHybridDecoder
                 // meaningful possible cuts: full runs, dictionary anchors,
                 // and the transition to an unknown Latin island.
                 if (end == raw.Length || !char.IsAsciiLetter(raw[end]) ||
-                    IsEnglishStart(raw, end) || IsJapaneseStart(raw, end))
+                    IsEnglishStart(raw, end) || IsJapaneseStart(raw, end) ||
+                    codeStarts.Contains(end))
                     candidates.Add((end, text));
                 if (steps >= MaxSpan) break;
             }
             if (end > start && !candidates.Any(e => e.End == end))
                 candidates.Add((end, text));
 
-            foreach (var (stop, kana) in candidates.TakeLast(4))
+            // The ordinary four candidate cuts can be pruned for speed,
+            // but an evidence-backed code onset must never disappear
+            // merely because it occurred before the last four cuts.
+            // This preserves the path
+            // konoyouni | node.js | nado rather than konoyouninode | . | js.
+            var chosen = candidates.TakeLast(4).ToList();
+            foreach (var anchored in candidates)
+            {
+                if (codeStarts.Contains(anchored.End) &&
+                    !chosen.Any(c => c.End == anchored.End))
+                    chosen.Add(anchored);
+            }
+
+            foreach (var (stop, kana) in chosen)
             {
                 var span = raw[start..stop];
                 dst[start].Add(Edge(raw, start, stop, kana,
