@@ -26,6 +26,7 @@ Windows / PowerShell、Git、.NET 8 SDK:
 git clone -b experiment/mozc-responsibility-ime-v0.6 https://github.com/Fugu0141/IncrementalBoundaryLab.git
 cd IncrementalBoundaryLab
 git rev-parse HEAD
+New-Item -ItemType Directory -Force research\exports | Out-Null
 dotnet --version
 dotnet run --project .\src\BoundaryLab.WinForms\BoundaryLab.WinForms.csproj -c Release
 ```
