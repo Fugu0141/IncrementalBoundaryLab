@@ -209,6 +209,14 @@ internal sealed class StreamHybridDecoder
                     ? e.Raw.Length * 0.72 + 0.65
                     : e.Raw.Length * 0.85 + 2.45;
                 var englishScore = e.Raw.Length * 0.9 + 2.65;
+                // A single 'o' in continuous ASCII is far more likely
+                // the onset of a Japanese syllable (o-mo-i...) than the
+                // complete object particle を. The conventional explicit
+                // input for the particle is 'wo', which remains supported.
+                // Do not turn a kana-readable word into o|mo|ima|su.
+                if (ja && particle && e.Raw == "o" &&
+                    end < raw.Length && char.IsAsciiLetter(raw[end]))
+                    japaneseScore -= 2.9;
                 // Short English inside a continuous kana-readable word
                 // is ambiguous; require external corroboration.
                 if (shortEnglish &&
@@ -330,6 +338,43 @@ internal sealed class StreamHybridDecoder
             dst[start].Add(Edge(raw, start, end, raw[start..end],
                 LanguageKind.English, LatticeEdgeKind.LiteralFallback,
                 score, "unknown-latin-island-review-both-sides"));
+
+            // A pending consonant island is not necessarily the WHOLE
+            // English word. 'meltype' tokenizes phonetically as
+            // me + [lty unresolved] + pe, so stopping at 'melty'
+            // incorrectly converts the final 'pe' to ぺ. Offer a
+            // one-syllable right extension if the syllable is NOT itself
+            // a Japanese particle and a word boundary follows it.
+            var nextUnit = units.FirstOrDefault(u => u.Start == end);
+            if (unknown >= 2 && nextUnit is not null &&
+                nextUnit.Kind == PhoneticUnitKind.Kana &&
+                nextUnit.Raw.Length is >= 2 and <= 3 &&
+                !IsJapaneseParticle(raw, nextUnit.Start))
+            {
+                var stop = nextUnit.End;
+                var terminal = stop == raw.Length ||
+                    !char.IsAsciiLetter(raw[stop]) ||
+                    IsJapaneseParticle(raw, stop);
+                if (terminal && stop - start <= MaxSpan)
+                {
+                    var suffixBonus = stop < raw.Length &&
+                        IsJapaneseParticle(raw, stop) ? 1.6 : 0.7;
+                    dst[start].Add(Edge(raw, start, stop, raw[start..stop],
+                        LanguageKind.English, LatticeEdgeKind.LiteralFallback,
+                        score + nextUnit.Raw.Length * 0.9 + suffixBonus,
+                        "unknown-latin-island-complete-terminal-kana"));
+                    if (start < units[i].Start)
+                    {
+                        var suffixStart = units[i].Start;
+                        dst[suffixStart].Add(Edge(
+                            raw, suffixStart, stop, raw[suffixStart..stop],
+                            LanguageKind.English, LatticeEdgeKind.LiteralFallback,
+                            (stop - suffixStart) * 0.9 + 1.0 +
+                            Math.Min(unknown, 6) * 0.48 + suffixBonus,
+                            "unknown-latin-island-complete-without-prefix"));
+                    }
+                }
+            }
             // Also expose the suffix-only alternative, so unrecognized
             // material never has to steal preceding Japanese syllables.
             if (start < units[i].Start)
@@ -343,6 +388,13 @@ internal sealed class StreamHybridDecoder
             }
         }
     }
+
+    private static bool IsJapaneseParticle(string raw, int position) =>
+        position >= 0 && position < raw.Length &&
+        Lexicon.ExactAt(raw, position).Any(e =>
+            e.Language == LanguageKind.Japanese &&
+            e.Evidence == "japanese-particle" &&
+            e.Raw.Length >= 2);
 
     private static void AddPunctuation(string raw, List<LatticeEdge>[] dst)
     {
