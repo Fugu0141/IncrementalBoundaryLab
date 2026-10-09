@@ -132,7 +132,14 @@ internal sealed class EvidenceLatticeDecoder
     private IReadOnlyList<LatticeEdge> GenerateEdges(string raw)
     {
         var edges = new List<LatticeEdge>();
+        // The old left-to-right kana projection acts as *independent evidence*
+        // rather than immediately deciding a language or committing text.
+        var phoneticProjection = _parameters.UsePhoneticFirstHybrid
+            ? PhoneticProjector.Project(raw)
+            : null;
         AddStructuralLatinEdges(raw, edges);
+        if (phoneticProjection is not null)
+            AddHybridProlongedVowelEdges(raw, edges);
 
         for (var start = 0; start < raw.Length; start++)
         {
@@ -213,7 +220,7 @@ internal sealed class EvidenceLatticeDecoder
 
             if (char.IsAsciiLetter(c))
             {
-                AddJapanesePhoneticEdges(raw, start, edges);
+                AddJapanesePhoneticEdges(raw, start, edges, phoneticProjection);
                 AddMozcConnectorEdges(raw, start, edges);
 
                 // Unknown-English fallback is intentionally enabled only
@@ -245,7 +252,8 @@ internal sealed class EvidenceLatticeDecoder
     private void AddJapanesePhoneticEdges(
         string raw,
         int start,
-        List<LatticeEdge> edges)
+        List<LatticeEdge> edges,
+        PhoneticProjection? phoneticProjection)
     {
         var maxEnd = Math.Min(
             raw.Length,
@@ -266,6 +274,18 @@ internal sealed class EvidenceLatticeDecoder
                     span,
                     LanguageKind.Japanese);
 
+            // The left-to-right phonetic projector can distinguish a complete
+            // kana reading like "oreha" from a tempting short English anchor
+            // such as "or". Do not boost a Japanese span immediately before
+            // a Latin binding symbol: e.g. "node.js" remains a structural token.
+            var priorEvidence = phoneticProjection is not null &&
+                span.Length >= 3 &&
+                (end == raw.Length || !InputSyntax.IsBindingSymbol(raw[end])) &&
+                PhoneticProjector.Readability(
+                    phoneticProjection, start, end) >= 0.999
+                    ? (span.Length >= 4 ? 2.2 : 1.15)
+                    : 0.0;
+
             edges.Add(new LatticeEdge(
                 start,
                 end,
@@ -275,10 +295,71 @@ internal sealed class EvidenceLatticeDecoder
                 LatticeEdgeKind.JapanesePhonetic,
                 span.Length -
                 0.55 +
-                advantage * 0.42,
+                advantage * 0.42 +
+                priorEvidence,
                 ja,
                 en,
-                "phonetic-lattice"));
+                priorEvidence > 0
+                    ? "phonetic-lattice-left-to-right"
+                    : "phonetic-lattice"));
+        }
+    }
+
+    private void AddHybridProlongedVowelEdges(
+        string raw,
+        List<LatticeEdge> edges)
+    {
+        // A hyphen between two complete romaji sequences can also denote a
+        // Japanese prolonged sound. Offer kana as an *alternative* hypothesis
+        // instead of declaring every hyphen literal. Examples: de-ta vs
+        // node-core. Conversion to kanji/katakana still belongs to Mozc.
+        for (var hyphen = 0; hyphen < raw.Length; hyphen++)
+        {
+            if (raw[hyphen] != '-')
+                continue;
+
+            var runStart = hyphen;
+            while (runStart > 0 && char.IsAsciiLetter(raw[runStart - 1]))
+                runStart--;
+
+            var runEnd = hyphen + 1;
+            while (runEnd < raw.Length && char.IsAsciiLetter(raw[runEnd]))
+                runEnd++;
+
+            for (var start = runStart; start <= hyphen - 2; start++)
+            {
+                var left = raw[start..hyphen];
+                if (!RomajiConverter.TryConvert(left, out var leftKana))
+                    continue;
+
+                for (var end = hyphen + 3;
+                     end <= Math.Min(
+                         runEnd,
+                         start + _parameters.MaxPhoneticSpan);
+                     end++)
+                {
+                    var right = raw[(hyphen + 1)..end];
+                    if (!RomajiConverter.TryConvert(right, out var rightKana))
+                        continue;
+
+                    var span = raw[start..end];
+                    var (ja, en) = LanguageProfileScorer.Score(span);
+                    edges.Add(new LatticeEdge(
+                        start,
+                        end,
+                        span,
+                        leftKana + "ー" + rightKana,
+                        LanguageKind.Japanese,
+                        LatticeEdgeKind.JapanesePhonetic,
+                        span.Length - 0.55 +
+                        LanguageProfileScorer.Advantage(
+                            span, LanguageKind.Japanese) * 0.42 +
+                        1.3,
+                        ja,
+                        en,
+                        "phonetic-first-prolonged-vowel"));
+                }
+            }
         }
     }
 
