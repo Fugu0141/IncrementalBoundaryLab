@@ -67,7 +67,7 @@ public sealed class MainForm : Form
         root.Controls.Add(new Label
         {
             Text = _session is StreamHybridSession
-                ? "v1: 単一のかな解析 + 未知英語候補 + 限定ビーム + 明示的区切りでのみ確定"
+                ? "v1.1: 連続かな語の過分割を防止し、未知の英語の語尾まで境界候補を復元"
                 : _session.Parameters.UsePhoneticFirstHybrid
                     ? "v0.8: かなのまとまり/切れ目を確定・曖昧に分類"
                     : "v0.6 baseline: 日本語/英語の責務境界をEvidence Latticeで推定",
