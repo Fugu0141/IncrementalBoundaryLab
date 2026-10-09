@@ -124,7 +124,7 @@ Check(after.Frames[^1].PhoneticStructure is not null,
 
 var report = EvidenceLatticeResearchExporter.CreateReport(
     after, steady.Parameters);
-Check(report.AlgorithmVersion == StreamHybridSession.AlgorithmVersion,
+Check(report.AlgorithmVersion == "iblab-stream-hybrid-v1.1",
     "v1 research report must identify correct engine");
 Check(EvidenceLatticeResearchExporter.ToJson(report).Contains(
         "reviewWindows", StringComparison.Ordinal),
