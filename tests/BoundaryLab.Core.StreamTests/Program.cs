@@ -81,6 +81,33 @@ foreach (var (raw, expected) in new[]
         "structural cuts exploded candidate work: " + raw);
 }
 
+// v1.3: English word-shape evidence is separate from a small exact
+// dictionary. Even kana-readable names/words may stay literal before a
+// Japanese particle, without forcing all nearby romaji to English.
+foreach (var (raw, expected) in new[]
+{
+    ("japanese", "japanese"),
+    ("japaneseno", "japaneseの"),
+    ("orehajapaneseno", "おれはjapaneseの"),
+    ("japanesedesu", "japaneseです")
+})
+{
+    var result = Run(raw);
+    Console.WriteLine($"MORPHOLOGY {raw} => {result.Output}");
+    Check(result.Output == expected,
+        $"morphological Latin candidate: expected {expected}, got {result.Output}");
+}
+foreach (var (raw, expected) in new[]
+{
+    ("nihongodesu", "日本語です"),
+    ("oreha", "おれは"),
+    ("toomoimasu", "とおもいます")
+})
+{
+    Check(Run(raw).Output == expected,
+        $"negative control should remain Japanese: {raw}");
+}
+
 var codeCutStudy = Run("konoyouninode.jsnado");
 var codeCutAt = codeCutStudy.Input.IndexOf("node.js", StringComparison.Ordinal);
 var codeCutFrame = codeCutStudy.Frames[^1].PhoneticStructure;
@@ -163,7 +190,7 @@ Check(after.Frames[^1].PhoneticStructure is not null,
 
 var report = EvidenceLatticeResearchExporter.CreateReport(
     after, steady.Parameters);
-Check(report.AlgorithmVersion == "iblab-stream-hybrid-v1.2",
+Check(report.AlgorithmVersion == "iblab-stream-hybrid-v1.3",
     "v1 research report must identify correct engine");
 Check(EvidenceLatticeResearchExporter.ToJson(report).Contains(
         "reviewWindows", StringComparison.Ordinal),
