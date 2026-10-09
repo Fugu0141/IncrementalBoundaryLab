@@ -160,7 +160,7 @@ Check(hybridMixed.Output.Contains("でーた", StringComparison.Ordinal),
 var hybridReport = EvidenceLatticeResearchExporter.CreateReport(
     hybridOre,
     new EvidenceLatticeParameters(UsePhoneticFirstHybrid: true));
-Check(hybridReport.AlgorithmVersion == "iblab-phonetic-first-hybrid-v0.7",
+Check(hybridReport.AlgorithmVersion == "iblab-phonetic-four-state-v0.8",
     "hybrid research JSON must declare the actual scoring variant");
 
 
