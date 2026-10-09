@@ -287,7 +287,14 @@ internal sealed class EvidenceLatticeDecoder
                 (e.Language == LanguageKind.Japanese &&
                  e.Raw.Length >= 3 &&
                  e.Raw.Length < span.Length &&
-                 e.Evidence != "japanese-particle"));
+                 e.Evidence != "japanese-particle")) ||
+                // A kana-readable Japanese prefix must not swallow an
+                // embedded, reliably recognized English term. The original
+                // githubdeissue pilot exposed this exact failure.
+                Lexicon.Entries.Any(e =>
+                    e.Language == LanguageKind.English &&
+                    e.Raw.Length >= 4 &&
+                    span.Contains(e.Raw, StringComparison.Ordinal));
             var priorEvidence = phoneticProjection is not null &&
                 !conflictsWithKnownLexeme &&
                 span.Length >= 3 &&
