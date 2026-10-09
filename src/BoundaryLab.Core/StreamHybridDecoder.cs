@@ -272,7 +272,8 @@ internal sealed class StreamHybridDecoder
         for (var i = 0; i < units.Count; i++)
         {
             if (units[i].Kind != PhoneticUnitKind.Pending) continue;
-            var left = i, lookback = 0;
+            var left = i;
+            var lookback = 0;
             while (left > 0 && units[left - 1].Kind == PhoneticUnitKind.Kana &&
                    lookback + units[left - 1].Raw.Length <= 2)
             {
