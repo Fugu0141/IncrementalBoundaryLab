@@ -55,6 +55,32 @@ foreach (var (raw, expected) in new[]
 }
 // Keep full user input outside the public repository; exercise
 // boundary interactions with short independently meaningful examples.
+// A real-world failure: node.js was PRESENT in the candidate graph, but
+// the preceding Japanese kana run could not STOP before the code token.
+// Compare the selected path, not just whether an edge exists.
+foreach (var (raw, expected) in new[]
+{
+    ("konoyouninode.jsnado", "このようにnode.jsなど"),
+    ("konnnitiha.konoyouninode.jsnado", "こんにちは.このようにnode.jsなど"),
+    ("node.jsnado", "node.jsなど"),
+    ("konoyouninode.js", "このようにnode.js"),
+    ("node.jswotukau", "node.jsを使う"),
+    ("nihongo.node.js", "日本語.node.js"),
+    ("node.jsonwotukau", "node.jsonを使う")
+})
+{
+    var result = Run(raw);
+    Console.WriteLine($"CODE_BOUNDARY {raw} => {result.Output}");
+    Check(result.Output == expected,
+        $"structural-backed cut: expected {expected}, got {result.Output}");
+    Check(result.ActiveBestSegments.Any(e =>
+            e.Raw.StartsWith("node.js", StringComparison.Ordinal) &&
+            e.Kind == LatticeEdgeKind.LatinStructural),
+        "missing structural code edge in selected path: " + raw);
+    Check(result.Frames[^1].TotalExpandedEdges < 2500,
+        "structural cuts exploded candidate work: " + raw);
+}
+
 var punctuated = Run("nihongo.meltypega");
 Check(punctuated.Output == "日本語.meltypeが",
     "period and unknown English suffix must coexist: " + punctuated.Output);
