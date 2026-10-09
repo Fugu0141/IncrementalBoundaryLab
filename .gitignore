@@ -4,3 +4,7 @@ obj/
 *.user
 *.suo
 research-output/
+
+# Unreviewed, possibly sensitive experiment observations
+research/exports/
+research/observations.jsonl
