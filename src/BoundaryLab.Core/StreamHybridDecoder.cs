@@ -248,6 +248,13 @@ internal sealed class StreamHybridDecoder
                 text += kana;
                 end += used;
                 steps++;
+
+                // Unknown Latin can BEGIN with a perfectly readable kana
+                // unit. For womotonimeltype..., the Japanese candidate
+                // must be allowed to stop BEFORE 'me', otherwise the
+                // English path cannot attach even if 'meltype' is present.
+                if (end > start && LooksLikeUnknownLatinStart(raw, end))
+                    candidates.Add((end, text));
                 // Avoid O(n^2) output hypotheses. Keep only a few
                 // meaningful possible cuts: full runs, dictionary anchors,
                 // and the transition to an unknown Latin island.
@@ -267,6 +274,23 @@ internal sealed class StreamHybridDecoder
                     span.Length * 0.77 + 0.8, "stream-kana-run"));
             }
         }
+    }
+
+    private static bool LooksLikeUnknownLatinStart(string raw, int at)
+    {
+        // A readable 2- or 3-character kana unit immediately followed
+        // by two consonants that cannot begin a romaji unit is evidence
+        // for a *possible* unknown English word, not proof of English.
+        if (at >= raw.Length || !char.IsAsciiLetter(raw[at]) ||
+            !RomajiConverter.TryConsume(raw, at, out var length, out _) ||
+            length < 2 || at + length + 1 >= raw.Length)
+            return false;
+        var first = at + length;
+        if (!char.IsAsciiLetter(raw[first]) ||
+            !char.IsAsciiLetter(raw[first + 1]) ||
+            RomajiConverter.TryConsume(raw, first, out _, out _))
+            return false;
+        return !RomajiConverter.TryConsume(raw, first + 1, out _, out _);
     }
 
     private static bool IsEnglishStart(string raw, int at) =>
