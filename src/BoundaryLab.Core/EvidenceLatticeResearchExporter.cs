@@ -10,7 +10,8 @@ public static class EvidenceLatticeResearchExporter
         EvidenceLatticeParameters parameters) =>
         new(
             "incremental-boundary-lab/mozc-responsibility-v1",
-            parameters.EngineId == "stream-hybrid-v1"
+            parameters.EngineId.StartsWith(
+                "stream-hybrid-v1", StringComparison.Ordinal)
                 ? StreamHybridSession.AlgorithmVersion
                 : parameters.UsePhoneticFirstHybrid
                     ? "iblab-phonetic-four-state-v0.8"
