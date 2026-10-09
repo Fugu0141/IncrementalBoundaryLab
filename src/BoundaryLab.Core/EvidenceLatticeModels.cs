@@ -78,7 +78,11 @@ public sealed record EvidenceLatticeFrame(
     long TotalExpandedEdges,
     int MozcProbesThisStep,
     bool MozcAvailable,
-    bool Rebuilt);
+    bool Rebuilt)
+{
+    // Research annotation only; it does not decide responsibility or commits.
+    public PhoneticStructureAnalysis? PhoneticStructure { get; init; }
+}
 
 public sealed record EvidenceLatticeResult(
     string Input,
