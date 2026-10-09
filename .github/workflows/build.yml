@@ -39,6 +39,18 @@ jobs:
       - name: Run Mozc Responsibility contract tests
         run: dotnet run --project tests/BoundaryLab.Core.MozcTests/BoundaryLab.Core.MozcTests.csproj -c Release
 
+
+  stream-hybrid:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+      - name: Run Stream Hybrid v1 regression and work tests
+        run: dotnet run --project tests/BoundaryLab.Core.StreamTests/BoundaryLab.Core.StreamTests.csproj -c Release
+
   stress:
     runs-on: ubuntu-latest
     timeout-minutes: 10
