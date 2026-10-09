@@ -251,7 +251,8 @@ public sealed class MainForm : Form
             p.RelativeScore >= -_session.Parameters.AlternativeScoreWindow);
 
         _summary.Text =
-            $"Mode {(_session.Parameters.UsePhoneticFirstHybrid ? "hybrid" : "baseline")} / " +
+            $"Mode {(_session is StreamHybridSession ? "stream-v1" :
+                _session.Parameters.UsePhoneticFirstHybrid ? "hybrid-v0.8" : "baseline")} / " +
             $"Mozc {(_mozc.IsAvailable ? "connected" : "offline")} / " +
             $"入力 {_result.Input.Length} / committed {_result.CommittedRawLength} / " +
             $"active {last.ActiveRaw.Length} / edges {last.CandidateEdges.Count} / " +
