@@ -11,7 +11,7 @@ public static class EvidenceLatticeResearchExporter
         new(
             "incremental-boundary-lab/mozc-responsibility-v1",
             parameters.UsePhoneticFirstHybrid
-                ? "iblab-phonetic-first-hybrid-v0.7"
+                ? "iblab-phonetic-four-state-v0.8"
                 : EvidenceLatticeSession.AlgorithmVersion,
             DateTimeOffset.UtcNow,
             result.Input,
