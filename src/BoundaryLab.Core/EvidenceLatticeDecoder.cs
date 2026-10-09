@@ -278,7 +278,18 @@ internal sealed class EvidenceLatticeDecoder
             // kana reading like "oreha" from a tempting short English anchor
             // such as "or". Do not boost a Japanese span immediately before
             // a Latin binding symbol: e.g. "node.js" remains a structural token.
+            // Never let a generic phonetic hypothesis eclipse a known
+            // lexeme such as issue (English), or consume an already-known
+            // Japanese word such as kyou (今日) merely to produce kana.
+            var lexicalAtStart = Lexicon.ExactAt(raw, start);
+            var conflictsWithKnownLexeme = lexicalAtStart.Any(e =>
+                e.Raw.Length == span.Length ||
+                (e.Language == LanguageKind.Japanese &&
+                 e.Raw.Length >= 3 &&
+                 e.Raw.Length < span.Length &&
+                 e.Evidence != "japanese-particle"));
             var priorEvidence = phoneticProjection is not null &&
+                !conflictsWithKnownLexeme &&
                 span.Length >= 3 &&
                 (end == raw.Length || !InputSyntax.IsBindingSymbol(raw[end])) &&
                 PhoneticProjector.Readability(
