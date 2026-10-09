@@ -28,7 +28,7 @@ def corpus(root):
         oblock=src.split('private static readonly EvalToken[] EnOov = new[]')[1].split('}.Select')[0]
         oov=re.findall(r'"([a-z]+)"',oblock)
         pblock=src.split('JaPhoneticOnly =')[1].split('];')[0]
-        phon=re.findall(r'new\\("([a-z]+)"',pblock)
+        phon=re.findall(r'new\("([a-z]+)"',pblock)
         if oov != SNAPSHOT_OOV or phon != SNAPSHOT_PHON:
             raise ValueError('Evaluation corpus differs from the recorded study snapshot')
     else:
