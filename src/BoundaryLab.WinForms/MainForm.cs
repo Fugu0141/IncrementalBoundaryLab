@@ -301,6 +301,32 @@ public sealed class MainForm : Form
                 f.Output
             })
             .ToList();
+
+        _fourState.DataSource = structure is null
+            ? null
+            : structure.Groups.Select(g => new
+            {
+                Position = g.Start,
+                End = g.End,
+                Category = g.Status == PhoneticEvidenceStatus.Confirmed
+                    ? "確定したまとまり" : "曖昧なまとまり",
+                g.Raw,
+                g.Preview,
+                g.Reason
+            })
+            .Concat(structure.Boundaries.Select(b => new
+            {
+                Position = b.Position,
+                End = b.Position,
+                Category = b.Status == PhoneticEvidenceStatus.Confirmed
+                    ? "確定した切れ目" : "曖昧な切れ目",
+                Raw = "|",
+                Preview = "",
+                b.Reason
+            }))
+            .OrderBy(x => x.Position)
+            .ThenBy(x => x.End)
+            .ToList();
     }
 
     private void ExportJson()
