@@ -1,6 +1,6 @@
 namespace BoundaryLab.Core;
 
-public sealed class EvidenceLatticeSession
+public sealed class EvidenceLatticeSession : IResearchSession
 {
     public const string AlgorithmVersion =
         "iblab-mozc-responsibility-ime-v0.6";
