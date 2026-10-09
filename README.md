@@ -1,5 +1,20 @@
 # IncrementalBoundaryLab
 
+## Research log / 研究履歴（累積）
+
+研究内容は日付順に**追記**し、詳細な根拠・失敗例・再現コードは `research/` に保存します。
+研究用ブランチの結果を `main` の実装性能と取り違えないように記録します。
+
+| 日付 | 研究内容 | 確認できたこと / 留保 | 資料 |
+| --- | --- | --- | --- |
+| 2026-10-10 | **H1: 未知英語の文字統計による候補生成** | 英語54語で固定語尾のみ5語、文字モデル32語、候補併用34語。候補生成の測定でありIMEの最終変換精度は未測定。5種類のデータ分割で感度確認 | [研究ノート](research/2026-10-10-oov-character-candidates.md) / [再現コード](research/oov_character_model_experiment.py) |
+| 2026-10-09 | **v1.3 Claude評価ハーネス（添付研究ブランチ）** | 263合成ケースの報告で未知英語の弱点を発見。ただしC#独立再実行前・gold境界ラベル誤り1件確認。**mainには未統合** | [検証と留保](research/2026-10-10-oov-character-candidates.md) |
+| 2026-10-09 | **Stream Hybrid v1.1–v1.3** | 候補境界の接続・未知Latin形態候補・可逆的な経路保持を検討。各方式は別ブランチ | [v1.3実験ブランチ](https://github.com/Fugu0141/IncrementalBoundaryLab/tree/experiment/stream-hybrid-v1.3-latin-morphology) |
+| 2026-10-08 | **Evidence Lattice / v0.5** | 複数の解釈を保持し、確定を遅らせるデコーダの探索 | [設計資料](docs/evidence-lattice-v0.5.md) |
+
+実験の追加時は**日付・対象コミット・比較条件・限界・実行方法**を残し、旧結果は削除せず追記します。
+[研究の目次とルール](research/README.md)
+
 A public C# / WinForms research project for mixed Japanese-romaji + English input.
 
 ## Current experiment: phonetic-first v0.3
