@@ -20,7 +20,11 @@ public sealed class StreamHybridSession : IResearchSession
             BeamWidth: 6,
             UsePhoneticFirstHybrid: true,
             EngineId: "stream-hybrid-v1");
-        _decoder = new StreamHybridDecoder(mozc);
+        _decoder = new StreamHybridDecoder(
+            mozc,
+            enableMozcProbes:
+                Environment.GetEnvironmentVariable(
+                    "BOUNDARYLAB_STREAM_MOZC") == "1");
     }
 
     public EvidenceLatticeParameters Parameters { get; }
