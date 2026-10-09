@@ -66,9 +66,11 @@ public sealed class MainForm : Form
 
         root.Controls.Add(new Label
         {
-            Text = _session.Parameters.UsePhoneticFirstHybrid
-                ? "v0.8: かなのまとまり/切れ目を確定・曖昧に分類。暫定的な研究注釈であり確定操作は変更しません"
-                : "v0.6 baseline: 日本語/英語の責務境界をEvidence Latticeで推定",
+            Text = _session is StreamHybridSession
+                ? "v1: 単一のかな解析 + 未知英語候補 + 限定ビーム + 明示的区切りでのみ確定"
+                : _session.Parameters.UsePhoneticFirstHybrid
+                    ? "v0.8: かなのまとまり/切れ目を確定・曖昧に分類"
+                    : "v0.6 baseline: 日本語/英語の責務境界をEvidence Latticeで推定",
             AutoSize = true,
             Font = new Font(Font, FontStyle.Bold)
         });
