@@ -102,6 +102,61 @@ Check(json.Contains("mozcTopCandidate", StringComparison.Ordinal),
 Check(json.Contains("mozcProbesThisStep", StringComparison.Ordinal),
     "research JSON must contain Mozc probe count");
 
+
+EvidenceLatticeResult RunOffline(string input, bool hybrid)
+{
+    var parameters = new EvidenceLatticeParameters(
+        UsePhoneticFirstHybrid: hybrid);
+    return new EvidenceLatticeSession(parameters).Update(input);
+}
+
+// Original research failures: preserve the baseline exactly and compare the
+// new phonetic-first signal with the same input (no fake Mozc oracle).
+var baselineOre = RunOffline("oreha", hybrid: false);
+var baselineData = RunOffline("de-ta", hybrid: false);
+Check(baselineOre.Output == "orえは",
+    "v0.6 baseline oreha unexpectedly changed: " + baselineOre.Output);
+Check(baselineData.Output == "de-tあ",
+    "v0.6 baseline de-ta unexpectedly changed: " + baselineData.Output);
+
+var hybridOre = RunOffline("oreha", hybrid: true);
+var hybridData = RunOffline("de-ta", hybrid: true);
+Check(hybridOre.Output == "おれは",
+    "hybrid should protect fully readable oreha: " + hybridOre.Output);
+Check(hybridData.Output == "でーた",
+    "hybrid should treat de-ta as kana long vowel (not kanji): " + hybridData.Output);
+Check(hybridOre.ActiveBestSegments.Any(
+        e => e.Evidence == "phonetic-lattice-left-to-right"),
+    "oreha needs phonetic-first evidence");
+Check(hybridData.ActiveBestSegments.Any(
+        e => e.Evidence == "phonetic-first-prolonged-vowel"),
+    "de-ta needs a long-vowel alternative");
+
+foreach (var token in new[]
+{
+    "commit", "theory", "node.js", "githubdeissue",
+    "kyouhacommitsimasita", "networkmiru"
+})
+{
+    var oldResult = RunOffline(token, hybrid: false);
+    var newResult = RunOffline(token, hybrid: true);
+    Check(newResult.Output == oldResult.Output,
+        "hybrid regression on " + token + ": " +
+        newResult.Output + " != " + oldResult.Output);
+}
+
+var hybridMixed = RunOffline(
+    "commitsitade-tawogithubnipushsitekudasai", hybrid: true);
+Check(hybridMixed.Output.Contains("でーた", StringComparison.Ordinal),
+    "mixed input must preserve the de-ta long-vowel reading: " +
+    hybridMixed.Output);
+
+var hybridReport = EvidenceLatticeResearchExporter.CreateReport(
+    hybridOre,
+    new EvidenceLatticeParameters(UsePhoneticFirstHybrid: true));
+Check(hybridReport.AlgorithmVersion == "iblab-phonetic-first-hybrid-v0.7",
+    "hybrid research JSON must declare the actual scoring variant");
+
 if (failures.Count > 0)
 {
     Console.Error.WriteLine($"FAILED: {failures.Count}");
