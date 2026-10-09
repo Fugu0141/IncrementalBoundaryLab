@@ -8,8 +8,10 @@ This is a **research prototype** and has not been validated as a Windows-wide TS
 
 The user provided one local research export running the original v1 engine,
 `algorithmVersion=iblab-stream-hybrid-v1`.
-Only short, anonymized fragments are listed here; the complete raw typing
-sample and large JSON history are **not** committed to the repository.
+Only short fragments appear in the current regression tests and this
+report; the complete **5.3 MB JSON history** has not been uploaded.
+An early experimental test commit briefly included the full input string;
+it was removed from the current tree, but Git history can retain it.
 
 Observed properties:
 - 128 keypress frames for a 128-character input;
