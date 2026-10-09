@@ -87,6 +87,43 @@ Check(EvidenceLatticeResearchExporter.ToJson(report).Contains(
         "reviewWindows", StringComparison.Ordinal),
     "research JSON must contain four-state context windows");
 
+// Bridge calls must not happen implicitly on each keystroke.
+// With explicit opt-in, a fake independent converter may supply a
+// Japanese display candidate; actual Windows bridge quality is untested.
+var originalBridgeSetting =
+    Environment.GetEnvironmentVariable("BOUNDARYLAB_STREAM_MOZC");
+try
+{
+    Environment.SetEnvironmentVariable("BOUNDARYLAB_STREAM_MOZC", null);
+    using (var disabledOracle = new CountingOracle())
+    {
+        var disabled = new StreamHybridSession(disabledOracle)
+            .Update("de-ta");
+        Check(disabledOracle.Probes == 0,
+            "new engine must not silently query synchronous Mozc");
+        Check(disabled.Output == "でーた",
+            "disabling bridge must preserve local kana hypothesis");
+    }
+    Environment.SetEnvironmentVariable("BOUNDARYLAB_STREAM_MOZC", "1");
+    using (var enabledOracle = new CountingOracle())
+    {
+        var enabled = new StreamHybridSession(enabledOracle)
+            .Update("de-ta");
+        Check(enabledOracle.Probes <= "de-ta".Length && enabledOracle.Probes > 0,
+            "enabled Mozc must be bounded to at most one probe/keypress");
+        Check(enabled.Output == "データ",
+            "selected real/bridge candidate must be displayed when available: " +
+            enabled.Output);
+        Check(enabled.Frames[^1].MozcProbesThisStep <= 1,
+            "one-probe budget violated");
+    }
+}
+finally
+{
+    Environment.SetEnvironmentVariable(
+        "BOUNDARYLAB_STREAM_MOZC", originalBridgeSetting);
+}
+
 // Representative probe, not an absolute speed benchmark. GitHub Actions
 // runners vary. Compare the same 57-character input and log both times.
 const string perfText =
@@ -118,3 +155,17 @@ if (failures.Count > 0)
 
 Console.WriteLine("Stream Hybrid v1 core tests passed.");
 return 0;
+
+internal sealed class CountingOracle : IMozcConversionOracle
+{
+    public int Probes { get; private set; }
+    public bool IsAvailable => true;
+    public MozcProbeResult Probe(string raw)
+    {
+        Probes++;
+        if (raw == "de-ta")
+            return new(true, true, raw, "でーた", ["データ"], 0.98);
+        return new(true, false, raw, "", [], 0);
+    }
+    public void Dispose() { }
+}
