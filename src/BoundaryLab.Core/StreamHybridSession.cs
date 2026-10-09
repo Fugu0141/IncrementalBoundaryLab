@@ -19,7 +19,7 @@ public sealed class StreamHybridSession : IResearchSession
         Parameters = new EvidenceLatticeParameters(
             BeamWidth: 6,
             UsePhoneticFirstHybrid: true,
-            EngineId: "stream-hybrid-v1.1");
+            EngineId: "stream-hybrid-v1.2");
         _decoder = new StreamHybridDecoder(
             mozc,
             enableMozcProbes:
