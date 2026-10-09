@@ -123,3 +123,18 @@ dotnet run --project .\src\BoundaryLab.WinForms\BoundaryLab.WinForms.csproj -c R
 
 The repository also contains a manual GitHub Actions workflow,
 `build-mozc-bridge`, which builds the native bridge against the pinned Mozc checkout.
+
+## Research evaluation and evidence (2026-10-09)
+
+The current build and regression tests do **not** establish a measured accuracy
+improvement over v0.5 or standard Mozc. An evidence audit, experiment protocol,
+unverified pilot inputs, and a Python metrics evaluator are available in
+[research/README.md](research/README.md).
+
+Run the metric evaluator self-tests with:
+```bash
+python3 -m unittest discover -s research -p "test_*.py"
+```
+
+Do not report a CER improvement, boundary F1 gain, or confidence interval until
+human-confirmed gold and paired observations have been collected.
