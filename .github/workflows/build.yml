@@ -59,3 +59,13 @@ jobs:
           dotnet-version: "8.0.x"
       - name: Build WinForms prototype
         run: dotnet build src/BoundaryLab.WinForms/BoundaryLab.WinForms.csproj -c Release
+
+  research-evaluator:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run offline research metric self-tests
+        run: python3 -m unittest discover -s research -p "test_*.py"
