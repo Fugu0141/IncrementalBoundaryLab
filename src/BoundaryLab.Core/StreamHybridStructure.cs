@@ -5,7 +5,8 @@ namespace BoundaryLab.Core;
 internal static class StreamHybridStructure
 {
     public static PhoneticStructureAnalysis Analyze(
-        string raw, IReadOnlyList<LatticePathSnapshot> paths)
+        string raw, IReadOnlyList<LatticePathSnapshot> paths,
+        IReadOnlyList<int>? orthographicCodeOnsets = null)
     {
         if (raw.Length == 0 || paths.Count == 0)
             return new([], [], []);
@@ -33,6 +34,22 @@ internal static class StreamHybridStructure
                 boundaries[edge.Start] =
                     new(edge.Start, PhoneticEvidenceStatus.Confirmed,
                         "explicit-delimiter");
+        }
+
+        // An alternative code edge can be excluded from the surviving beam
+        // by an overlong kana span. Preserve that structural start in the
+        // uncertainty map rather than declaring the kana span "Confirmed".
+        foreach (var start in orthographicCodeOnsets ?? [])
+        {
+            if (start <= 0 || start >= raw.Length)
+                continue;
+            if (!boundaries.TryGetValue(start, out var known) ||
+                known.Status != PhoneticEvidenceStatus.Confirmed)
+                boundaries[start] = new(
+                    start, PhoneticEvidenceStatus.Tentative,
+                    "orthographic-code-start-alternative");
+            risks.Add((start, Math.Min(raw.Length, start + 1),
+                "possible-code-identifier-start"));
         }
 
         foreach (var edge in best)
