@@ -141,6 +141,23 @@ internal sealed class EvidenceLatticeDecoder
         if (phoneticProjection is not null)
             AddHybridProlongedVowelEdges(raw, edges);
 
+        // Word anchors are detected once per input step. These protect
+        // recognized English words even when a competing kana span covers
+        // only part of the same word (e.g. de + issue vs deissue).
+        var protectedEnglish = new List<(int Start, int End)>();
+        if (phoneticProjection is not null)
+        {
+            for (var i = 0; i < raw.Length; i++)
+            {
+                foreach (var entry in Lexicon.ExactAt(raw, i))
+                {
+                    if (entry.Language == LanguageKind.English &&
+                        entry.Raw.Length >= 4)
+                        protectedEnglish.Add((i, i + entry.Raw.Length));
+                }
+            }
+        }
+
         for (var start = 0; start < raw.Length; start++)
         {
             var c = raw[start];
@@ -220,7 +237,8 @@ internal sealed class EvidenceLatticeDecoder
 
             if (char.IsAsciiLetter(c))
             {
-                AddJapanesePhoneticEdges(raw, start, edges, phoneticProjection);
+                AddJapanesePhoneticEdges(
+                    raw, start, edges, phoneticProjection, protectedEnglish);
                 AddMozcConnectorEdges(raw, start, edges);
 
                 // Unknown-English fallback is intentionally enabled only
@@ -253,7 +271,8 @@ internal sealed class EvidenceLatticeDecoder
         string raw,
         int start,
         List<LatticeEdge> edges,
-        PhoneticProjection? phoneticProjection)
+        PhoneticProjection? phoneticProjection,
+        IReadOnlyList<(int Start, int End)> protectedEnglish)
     {
         var maxEnd = Math.Min(
             raw.Length,
@@ -291,10 +310,8 @@ internal sealed class EvidenceLatticeDecoder
                 // A kana-readable Japanese prefix must not swallow an
                 // embedded, reliably recognized English term. The original
                 // githubdeissue pilot exposed this exact failure.
-                Lexicon.Entries.Any(e =>
-                    e.Language == LanguageKind.English &&
-                    e.Raw.Length >= 4 &&
-                    span.Contains(e.Raw, StringComparison.Ordinal));
+                protectedEnglish.Any(anchor =>
+                    start < anchor.End && anchor.Start < end);
             var priorEvidence = phoneticProjection is not null &&
                 !conflictsWithKnownLexeme &&
                 span.Length >= 3 &&
