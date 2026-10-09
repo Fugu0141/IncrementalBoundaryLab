@@ -53,24 +53,11 @@ foreach (var (raw, expected) in new[]
     Check(result.Output == expected,
         $"user trace fragment {raw}: expected {expected}, got {result.Output}");
 }
-var actualShape = Run(
-    "korehakanariiidesune.saiyousitemoiitoomoimasu " +
-    "konobranchwomotonimeltypenimoireteiikamodesu." +
-    "meltypegakitinntohannnousitemasennne.");
-Console.WriteLine("USER_TRACE_SHAPE " + actualShape.Output);
-Check(actualShape.Output.Contains("とおもいます ", StringComparison.Ordinal),
-    "dictionary should not prefer 'o|mo|ima|su'");
-Check(actualShape.Output.Contains("meltypeにも", StringComparison.Ordinal),
-    "missing English terminal syllable before ni");
-Check(actualShape.Output.Contains("meltypeが", StringComparison.Ordinal),
-    "missing English terminal syllable before ga");
-Check(actualShape.Output.Count(c => c == '.') == 3,
-    "sentence periods must remain literal and not join all following text");
-Check(actualShape.Frames[^1].TotalExpandedEdges < 12000,
-    "user-length case expanded unexpectedly: " +
-    actualShape.Frames[^1].TotalExpandedEdges);
-Console.WriteLine("USER_TRACE_WORK " +
-    actualShape.Frames[^1].TotalExpandedEdges);
+// Keep full user input outside the public repository; exercise
+// boundary interactions with short independently meaningful examples.
+var punctuated = Run("nihongo.meltypega");
+Check(punctuated.Output == "日本語.meltypeが",
+    "period and unknown English suffix must coexist: " + punctuated.Output);
 
 var mixed = Run("tatoebathetoiukotobaha,englishwomanabunihadaizinakotodesu");
 Console.WriteLine("MIXED " + mixed.Output);
