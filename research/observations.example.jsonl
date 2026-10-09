@@ -1,0 +1,2 @@
+{"status":"template","case_id":"M01","condition":"v0.6_offline","research_json":"research/exports/M01-v0.6_offline.json","observed_output":null,"predicted_boundaries":null,"notes":"export path is an example, no measurement has been made"}
+{"status":"template","case_id":"M01","condition":"v0.6_mozc","research_json":"research/exports/M01-v0.6_mozc.json","observed_output":null,"predicted_boundaries":null,"notes":"verify actual Mozc bridge/server and candidate results first"}
