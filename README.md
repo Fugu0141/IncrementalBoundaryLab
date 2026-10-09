@@ -1,5 +1,36 @@
 # IncrementalBoundaryLab
 
+## New standalone engine: Stream Hybrid v1 (2026-10-09)
+
+The v1 engine is a clean-room **research-decoder redesign** in the separate
+`experiment/stream-hybrid-v1` branch. Older v0.6/v0.7/v0.8 code remains for
+controlled A/B comparison. V1 unifies phonetic readability, dictionary,
+**unknown-Latin island**, code punctuation, and provisional grouping evidence
+in one bounded candidate search; it does not install a native Windows IME.
+
+In Windows **CMD**:
+
+```bat
+git fetch origin
+git switch experiment/stream-hybrid-v1
+git pull --ff-only
+set "BOUNDARYLAB_ENGINE=v1"
+set "BOUNDARYLAB_STREAM_MOZC="
+dotnet run --project .\src\BoundaryLab.WinForms\BoundaryLab.WinForms.csproj -c Release
+```
+
+Check title **Stream Hybrid v1 (new engine)**, then compare outputs and export
+research JSON. The `Phonetic four-state` tab reports ambiguous group/cut
+evidence from competing paths, not irreversible IME commitment.
+
+For opt-in real Mozc bridge previews ONLY:
+`set "BOUNDARYLAB_STREAM_MOZC=1"` (requires bridge setup; can block on
+synchronous queries). The offline research engine is the default.
+
+Full mechanism, before/after workload, known limitations, and study protocol:
+[Stream Hybrid v1 redesign](research/stream-hybrid-v1-redesign.md).
+
+
 A public C# / WinForms research project for mixed Japanese-romaji + English input.
 
 ## Current experiment: phonetic-first v0.3
