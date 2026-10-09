@@ -37,6 +37,12 @@ foreach (var (input, expected) in cases)
 
 var mixed = Run("tatoebathetoiukotobaha,englishwomanabunihadaizinakotodesu");
 Console.WriteLine("MIXED " + mixed.Output);
+Console.WriteLine("MIXED SEGMENTS " + string.Join(" / ",
+    mixed.CommittedSegments.Concat(mixed.ActiveBestSegments)
+        .Select(e => $"{e.Raw}=>{e.Output}:{e.Kind}:{e.LocalScore:F2}")));
+Console.WriteLine("MIXED PATHS " + string.Join(" || ",
+    mixed.Frames[^1].TopPaths.Take(3).Select(p =>
+        $"{p.Score:F2}:{p.Segmentation}=>{p.Output}")));
 Check(mixed.Output.StartsWith("たとえばthe", StringComparison.Ordinal),
     "lost 'the' after Japanese: " + mixed.Output);
 Check(mixed.Output.Contains("english", StringComparison.Ordinal),
