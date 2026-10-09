@@ -81,6 +81,19 @@ foreach (var (raw, expected) in new[]
         "structural cuts exploded candidate work: " + raw);
 }
 
+var codeCutStudy = Run("konoyouninode.jsnado");
+var codeCutAt = codeCutStudy.Input.IndexOf("node.js", StringComparison.Ordinal);
+var codeCutFrame = codeCutStudy.Frames[^1].PhoneticStructure;
+Check(codeCutAt > 0 && codeCutFrame is not null &&
+      codeCutFrame.Boundaries.Any(b =>
+          b.Position == codeCutAt &&
+          b.Status == PhoneticEvidenceStatus.Tentative),
+    "structural code start must remain an explicitly tentative phonetic cut");
+Check(codeCutFrame is not null &&
+      codeCutFrame.ReviewWindows.Any(w =>
+          w.Start <= codeCutAt && w.End > codeCutAt),
+    "four-state diagnostics should preserve the code-start review window");
+
 var punctuated = Run("nihongo.meltypega");
 Check(punctuated.Output == "日本語.meltypeが",
     "period and unknown English suffix must coexist: " + punctuated.Output);
