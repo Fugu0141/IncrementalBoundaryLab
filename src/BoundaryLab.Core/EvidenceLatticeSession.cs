@@ -204,7 +204,14 @@ public sealed class EvidenceLatticeSession
             _totalExpandedEdges,
             probes,
             _decoder.MozcAvailable,
-            rebuilt));
+            rebuilt)
+        {
+            // The four-state phonetic analysis is advisory. A Confirmed
+            // phonetic group is not an irrevocable language/IME commit.
+            PhoneticStructure = _parameters.UsePhoneticFirstHybrid
+                ? PhoneticStructureAnalyzer.Analyze(displayActive)
+                : null
+        });
     }
 
     private IReadOnlyList<LatticePathSnapshot> SelectConsensusPaths(
