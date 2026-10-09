@@ -40,9 +40,9 @@ Literal / Japanese / Open / Boundary を分離する。
 | --- | --- | --- |
 | [通常 CI / HEAD 4ce0c6a](https://github.com/Fugu0141/IncrementalBoundaryLab/actions/runs/37860862951) | core / lattice / mozc-contract / stress / WinForms のジョブ成功 | 現実の日本語・英語混合文に対する改善量 |
 | [ネイティブ Mozc CI / b5f18be](https://github.com/Fugu0141/IncrementalBoundaryLab/actions/runs/37860774326) | native decoder / output / runtime テストおよびパッチ済み TSF DLL ビルド成功 | Windows にインストールして各アプリで入力できること |
-| [既存の大規模 CI の説明](../ci-validation.md) | 15,000 ランダム入力、決定性、構造的不変条件等を検査する | 15,000 文の言語的正解率 |
-| [研究 JSON モデル](../../src/BoundaryLab.Core/EvidenceLatticeModels.cs) | 候補、スコア、確定イベント、探索辺数、Mozc 問い合わせ回数を出力 | 正解率、実時間 P95、校正された確率 |
-| [ネイティブデコーダ](../../mozc_overlay/responsibility/responsibility_decoder.cc) | 小規模固定英語語彙と一部の大文字ヒントを利用 | 未知小文字英単語の網羅的認識 |
+| [既存の大規模 CI の説明](../docs/ci-validation.md) | 15,000 ランダム入力、決定性、構造的不変条件等を検査する | 15,000 文の言語的正解率 |
+| [研究 JSON モデル](../src/BoundaryLab.Core/EvidenceLatticeModels.cs) | 候補、スコア、確定イベント、探索辺数、Mozc 問い合わせ回数を出力 | 正解率、実時間 P95、校正された確率 |
+| [ネイティブデコーダ](../mozc_overlay/responsibility/responsibility_decoder.cc) | 小規模固定英語語彙と一部の大文字ヒントを利用 | 未知小文字英単語の網羅的認識 |
 
 追加の留意点:
 - WinForms UI の `InputSyntax.Normalize` は ASCII 英大文字を小文字化するため、GUI の実験から大文字保護処理の効果を直接主張できない。
