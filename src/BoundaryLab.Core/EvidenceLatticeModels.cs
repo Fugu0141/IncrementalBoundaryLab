@@ -30,7 +30,8 @@ public sealed record EvidenceLatticeParameters(
     int MozcProbeBudget = 18,
     double MozcScoreWeight = 2.6,
     double MozcRejectPenalty = 1.2,
-    bool UsePhoneticFirstHybrid = false);
+    bool UsePhoneticFirstHybrid = false,
+    string EngineId = "legacy");
 
 public sealed record LatticeEdge(
     int Start,
