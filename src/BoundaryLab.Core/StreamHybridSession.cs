@@ -4,7 +4,7 @@ namespace BoundaryLab.Core;
 // only at explicit hard separators and never treats '.'/'-' as such.
 public sealed class StreamHybridSession : IResearchSession
 {
-    public const string AlgorithmVersion = "iblab-stream-hybrid-v1.1";
+    public const string AlgorithmVersion = "iblab-stream-hybrid-v1.2";
     private const int MaxRetainedFrames = 256;
 
     private readonly StreamHybridDecoder _decoder;
