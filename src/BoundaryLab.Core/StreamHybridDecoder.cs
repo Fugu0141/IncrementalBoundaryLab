@@ -357,16 +357,21 @@ internal sealed class StreamHybridDecoder
         for (var start = 0; start < raw.Length; start++)
         {
             if (!char.IsAsciiLetter(raw[start])) continue;
-            var maxEnd = Math.Min(raw.Length, start + MaxSpan);
+            var maxEnd = start;
+            while (maxEnd < raw.Length && maxEnd - start < MaxSpan &&
+                   char.IsAsciiLetter(raw[maxEnd]))
+                maxEnd++;
             for (var end = start + 7; end <= maxEnd; end++)
             {
                 var span = raw.AsSpan(start, end - start);
-                if (!span.ToString().All(char.IsAsciiLetter))
+                string? ending = null;
+                foreach (var suffix in EnglishMorphologyEndings)
+                {
+                    if (!span.EndsWith(suffix.AsSpan(), StringComparison.Ordinal))
+                        continue;
+                    ending = suffix;
                     break;
-
-                var ending = EnglishMorphologyEndings
-                    .FirstOrDefault(suffix =>
-                        span.EndsWith(suffix, StringComparison.Ordinal));
+                }
                 if (ending is null) continue;
 
                 // A complete Latin token must reach punctuation/input end
