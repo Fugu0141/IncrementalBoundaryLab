@@ -39,7 +39,7 @@ public sealed class MainForm : Form
 
         Text = "Incremental Boundary Lab — " +
             (_session is StreamHybridSession
-                ? "Stream Hybrid v1.1 (boundary refinement)"
+                ? "Stream Hybrid v1.2 (shared code/phonetic boundaries)"
                 : _session.Parameters.UsePhoneticFirstHybrid
                     ? "Four-state Phonetic Hybrid v0.8 (research diagnostics)"
                     : "Mozc Responsibility IME v0.6 baseline");
