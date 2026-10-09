@@ -68,6 +68,25 @@ var dot = Run("node.");
 Check(dot.CommittedRawLength == 0,
     "period must not force an irreversible commit");
 
+foreach (var input in new[] { "oreha.", "github.comde", "nihongo.node.js" })
+{
+    var result = Run(input);
+    Console.WriteLine("PERIOD_CASE " + input + " -> " + result.Output);
+    Check(result.CommittedRawLength == 0,
+        "'.' must not cause irreversible commit: " + input);
+    Check(result.Output.Contains('.'),
+        "'.' must never disappear or become kana: " + input);
+}
+
+var longStream = new string('a', 270);
+var bounded = Run(longStream);
+Check(bounded.Frames.Count <= 256,
+    "v1 per-keypress trace must remain bounded");
+Check(bounded.Frames[^1].CandidateEdges.Count <= 80,
+    "v1 diagnostic edge export must remain bounded");
+Console.WriteLine($"BOUNDED input={longStream.Length} frames={bounded.Frames.Count} " +
+                  $"expanded={bounded.Frames[^1].TotalExpandedEdges}");
+
 var steady = new StreamHybridSession();
 var before = steady.Update("ore");
 var after = steady.Update("oreha");
