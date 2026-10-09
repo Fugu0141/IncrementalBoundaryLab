@@ -29,10 +29,13 @@ public sealed class MainForm : Form
         _mozc = MozcBridgeOracle.TryCreateDefault();
         var hybrid = Environment.GetEnvironmentVariable(
             "BOUNDARYLAB_PHONETIC_HYBRID") == "1";
-        _session = new EvidenceLatticeSession(
-            new EvidenceLatticeParameters(
-                UsePhoneticFirstHybrid: hybrid),
-            _mozc);
+        var engine = Environment.GetEnvironmentVariable("BOUNDARYLAB_ENGINE");
+        _session = engine == "v1"
+            ? new StreamHybridSession(_mozc)
+            : new EvidenceLatticeSession(
+                new EvidenceLatticeParameters(
+                    UsePhoneticFirstHybrid: hybrid),
+                _mozc);
 
         Text = "Incremental Boundary Lab — " +
             (_session.Parameters.UsePhoneticFirstHybrid
