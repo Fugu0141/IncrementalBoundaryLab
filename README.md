@@ -1,5 +1,29 @@
 # IncrementalBoundaryLab
 
+## Current research experiment: Stream Hybrid v1.1
+
+This branch `experiment/stream-hybrid-v1.1` fixes two actual offline
+mis-segmentation failures: `toomoimasu -> とおもいます` and
+`meltypega -> meltypeが`. It improves unknown English boundaries
+without claiming that Mozc converts kanji or katakana in offline mode.
+
+Windows CMD:
+
+```bat
+git fetch origin
+git switch experiment/stream-hybrid-v1.1
+git pull --ff-only
+set "BOUNDARYLAB_ENGINE=v1"
+set "BOUNDARYLAB_STREAM_MOZC="
+dotnet run --project .\src\BoundaryLab.WinForms\BoundaryLab.WinForms.csproj -c Release
+```
+
+The research title reads `Stream Hybrid v1.1 (boundary refinement)`.
+Trace exports declare `iblab-stream-hybrid-v1.1`; do not confuse
+these with the v1 baseline. See
+[real trace evaluation and v1.1 fixes](research/stream-hybrid-v1.1-evaluation.md).
+
+
 ## New standalone engine: Stream Hybrid v1 (2026-10-09)
 
 The v1 engine is a clean-room **research-decoder redesign** in the separate
