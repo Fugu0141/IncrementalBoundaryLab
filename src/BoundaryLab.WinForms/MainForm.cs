@@ -39,7 +39,7 @@ public sealed class MainForm : Form
 
         Text = "Incremental Boundary Lab — " +
             (_session is StreamHybridSession
-                ? "Stream Hybrid v1.2 (shared code/phonetic boundaries)"
+                ? "Stream Hybrid v1.3 (Latin word-shape boundary candidates)"
                 : _session.Parameters.UsePhoneticFirstHybrid
                     ? "Four-state Phonetic Hybrid v0.8 (research diagnostics)"
                     : "Mozc Responsibility IME v0.6 baseline");
@@ -67,7 +67,7 @@ public sealed class MainForm : Form
         root.Controls.Add(new Label
         {
             Text = _session is StreamHybridSession
-                ? "v1.2: コード識別子の開始位置をかな解析にも共有し、日本語の過剰結合を防止"
+                ? "v1.3: 英語の語形候補と未知語・コードの開始位置を共有し、かなの過剰結合を防止"
                 : _session.Parameters.UsePhoneticFirstHybrid
                     ? "v0.8: かなのまとまり/切れ目を確定・曖昧に分類"
                     : "v0.6 baseline: 日本語/英語の責務境界をEvidence Latticeで推定",
