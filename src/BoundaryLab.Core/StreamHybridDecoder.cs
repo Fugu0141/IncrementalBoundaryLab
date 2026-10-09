@@ -30,11 +30,19 @@ internal sealed class StreamHybridDecoder
             .ToDictionary(g => g.Key, g => g.ToArray());
 
     private readonly IMozcConversionOracle _mozc;
+    // Real bridge requests are synchronous and may timeout after 3s. Keep
+    // speculative per-keystroke queries DISABLED unless explicitly opted in.
+    private readonly bool _enableMozcProbes;
     private readonly Dictionary<string, MozcProbeResult> _probes =
         new(StringComparer.Ordinal);
 
-    public StreamHybridDecoder(IMozcConversionOracle? mozc = null) =>
+    public StreamHybridDecoder(
+        IMozcConversionOracle? mozc = null,
+        bool enableMozcProbes = false)
+    {
         _mozc = mozc ?? new NullMozcConversionOracle();
+        _enableMozcProbes = enableMozcProbes;
+    }
 
     public bool MozcAvailable => _mozc.IsAvailable;
 
@@ -125,7 +133,7 @@ internal sealed class StreamHybridDecoder
             var edges = Trace(node);
             // Only the top hypothesis may ask Mozc for one Japanese span.
             // Never spray speculative queries across the entire lattice.
-            if (paths.Count == 0 && _mozc.IsAvailable)
+            if (paths.Count == 0 && _enableMozcProbes && _mozc.IsAvailable)
             {
                 var index = Array.FindIndex(edges, e =>
                     e.Language == LanguageKind.Japanese &&
