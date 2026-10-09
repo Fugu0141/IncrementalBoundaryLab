@@ -29,7 +29,8 @@ public sealed record EvidenceLatticeParameters(
     double LanguageSwitchPenalty = 0.30,
     int MozcProbeBudget = 18,
     double MozcScoreWeight = 2.6,
-    double MozcRejectPenalty = 1.2);
+    double MozcRejectPenalty = 1.2,
+    bool UsePhoneticFirstHybrid = false);
 
 public sealed record LatticeEdge(
     int Start,
