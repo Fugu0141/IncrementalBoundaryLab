@@ -35,6 +35,43 @@ foreach (var (input, expected) in cases)
         "unbounded trace output for " + input);
 }
 
+// Derived from the 2026-10-09 real user trace. Do not publish
+// the original trace, which may include private typing history.
+foreach (var (raw, expected) in new[]
+{
+    ("toomoimasu", "とおもいます"),
+    ("saiyousitemoiitoomoimasu ", "さいようしてもいいとおもいます "),
+    ("meltype", "meltype"),
+    ("meltypega", "meltypeが"),
+    ("meltypenimo", "meltypeにも"),
+    ("konobranchwomotonimeltypenimo", "このbranchをもとにmeltypeにも"),
+    ("meltypegakitinntohannnousite", "meltypeがきちんとはんのうして")
+})
+{
+    var result = Run(raw);
+    Console.WriteLine($"USER_TRACE_REGRESSION {raw} => {result.Output}");
+    Check(result.Output == expected,
+        $"user trace fragment {raw}: expected {expected}, got {result.Output}");
+}
+var actualShape = Run(
+    "korehakanariiidesune.saiyousitemoiitoomoimasu " +
+    "konobranchwomotonimeltypenimoireteiikamodesu." +
+    "meltypegakitinntohannnousitemasennne.");
+Console.WriteLine("USER_TRACE_SHAPE " + actualShape.Output);
+Check(actualShape.Output.Contains("とおもいます ", StringComparison.Ordinal),
+    "dictionary should not prefer 'o|mo|ima|su'");
+Check(actualShape.Output.Contains("meltypeにも", StringComparison.Ordinal),
+    "missing English terminal syllable before ni");
+Check(actualShape.Output.Contains("meltypeが", StringComparison.Ordinal),
+    "missing English terminal syllable before ga");
+Check(actualShape.Output.Count(c => c == '.') == 3,
+    "sentence periods must remain literal and not join all following text");
+Check(actualShape.Frames[^1].TotalExpandedEdges < 12000,
+    "user-length case expanded unexpectedly: " +
+    actualShape.Frames[^1].TotalExpandedEdges);
+Console.WriteLine("USER_TRACE_WORK " +
+    actualShape.Frames[^1].TotalExpandedEdges);
+
 var mixed = Run("tatoebathetoiukotobaha,englishwomanabunihadaizinakotodesu");
 Console.WriteLine("MIXED " + mixed.Output);
 Console.WriteLine("MIXED SEGMENTS " + string.Join(" / ",
