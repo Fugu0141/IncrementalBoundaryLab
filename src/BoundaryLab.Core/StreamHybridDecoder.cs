@@ -192,7 +192,11 @@ internal sealed class StreamHybridDecoder
                 var end = start + e.Raw.Length;
                 var ja = e.Language == LanguageKind.Japanese;
                 var particle = ja && e.Evidence == "japanese-particle";
-                var shortEnglish = !ja && e.Raw.Length <= 3;
+                // Two-letter function words like "or" are ambiguous
+                // inside romaji. A three-letter recognized English word
+                // ("the") must not be demoted behind an orphan 't'
+                // followed by the Japanese 'he' particle.
+                var shortEnglish = !ja && e.Raw.Length <= 2;
                 var japaneseScore = particle
                     ? e.Raw.Length * 0.72 + 0.65
                     : e.Raw.Length * 0.85 + 2.45;
