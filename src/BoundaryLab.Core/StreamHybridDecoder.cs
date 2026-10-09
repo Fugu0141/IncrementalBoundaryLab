@@ -10,7 +10,8 @@ internal sealed class StreamHybridDecoder
         IReadOnlyList<LatticePathSnapshot> Paths,
         string PhoneticPreview,
         int Expanded,
-        int MozcProbes);
+        int MozcProbes,
+        IReadOnlyList<int> OrthographicCodeOnsets);
 
     private const int Beam = 6;
     private const int MaxSpan = 24;
@@ -49,7 +50,7 @@ internal sealed class StreamHybridDecoder
     public DecodeResult Decode(string raw)
     {
         if (raw.Length == 0)
-            return new([], [], "", 0, 0);
+            return new([], [], "", 0, 0, []);
 
         var projection = PhoneticProjector.Project(raw);
         var candidate = new List<LatticeEdge>[raw.Length];
@@ -183,7 +184,9 @@ internal sealed class StreamHybridDecoder
         var diagnostics = flattened.OrderBy(e => e.Start)
             .ThenByDescending(e => e.LocalScore)
             .Take(TraceLimit).ToArray();
-        return new(diagnostics, paths, projection.Preview, expanded, probes);
+        return new(
+            diagnostics, paths, projection.Preview, expanded, probes,
+            codeStarts.OrderBy(x => x).ToArray());
     }
 
     private static LatticeEdge[] Trace(Node node)
