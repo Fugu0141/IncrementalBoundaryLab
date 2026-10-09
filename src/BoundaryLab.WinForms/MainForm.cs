@@ -25,9 +25,17 @@ public sealed class MainForm : Form
     public MainForm()
     {
         _mozc = MozcBridgeOracle.TryCreateDefault();
-        _session = new EvidenceLatticeSession(mozc: _mozc);
+        var hybrid = Environment.GetEnvironmentVariable(
+            "BOUNDARYLAB_PHONETIC_HYBRID") == "1";
+        _session = new EvidenceLatticeSession(
+            new EvidenceLatticeParameters(
+                UsePhoneticFirstHybrid: hybrid),
+            _mozc);
 
-        Text = "Incremental Boundary Lab — Mozc Responsibility IME v0.6";
+        Text = "Incremental Boundary Lab — " +
+            (_session.Parameters.UsePhoneticFirstHybrid
+                ? "Phonetic-first Hybrid v0.7 (experimental)"
+                : "Mozc Responsibility IME v0.6 baseline");
         Width = 1460;
         Height = 940;
         MinimumSize = new Size(1060, 760);
@@ -51,7 +59,9 @@ public sealed class MainForm : Form
 
         root.Controls.Add(new Label
         {
-            Text = "v0.6: Japanese / Literal / Open を分離し、日本語候補はMozcの実変換結果を境界スコアへ戻す",
+            Text = _session.Parameters.UsePhoneticFirstHybrid
+                ? "v0.7 hybrid: 左からのかな投影を追加根拠に使用。確定はEvidence Latticeが管理"
+                : "v0.6 baseline: 日本語/英語の責務境界をEvidence Latticeで推定",
             AutoSize = true,
             Font = new Font(Font, FontStyle.Bold)
         });
@@ -220,6 +230,7 @@ public sealed class MainForm : Form
             p.RelativeScore >= -_session.Parameters.AlternativeScoreWindow);
 
         _summary.Text =
+            $"Mode {(_session.Parameters.UsePhoneticFirstHybrid ? "hybrid" : "baseline")} / " +
             $"Mozc {(_mozc.IsAvailable ? "connected" : "offline")} / " +
             $"入力 {_result.Input.Length} / committed {_result.CommittedRawLength} / " +
             $"active {last.ActiveRaw.Length} / edges {last.CandidateEdges.Count} / " +
