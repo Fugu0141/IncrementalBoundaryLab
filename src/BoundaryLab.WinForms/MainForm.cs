@@ -6,7 +6,7 @@ namespace BoundaryLab.WinForms;
 public sealed class MainForm : Form
 {
     private readonly IMozcConversionOracle _mozc;
-    private readonly EvidenceLatticeSession _session;
+    private readonly IResearchSession _session;
     private EvidenceLatticeResult _result =
         new("", "", 0, [], [], []);
 
