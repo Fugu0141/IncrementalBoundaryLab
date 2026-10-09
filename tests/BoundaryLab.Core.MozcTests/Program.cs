@@ -163,6 +163,68 @@ var hybridReport = EvidenceLatticeResearchExporter.CreateReport(
 Check(hybridReport.AlgorithmVersion == "iblab-phonetic-first-hybrid-v0.7",
     "hybrid research JSON must declare the actual scoring variant");
 
+
+var ambiguousOre = PhoneticStructureAnalyzer.Analyze("oreha");
+Check(ambiguousOre.Groups.Any(g =>
+        g.Raw == "oreha" &&
+        g.Status == PhoneticEvidenceStatus.Tentative),
+    "oreha is readable but must stay structurally tentative due to 'or'");
+Check(ambiguousOre.Boundaries.Any(b =>
+        b.Position == 2 &&
+        b.Status == PhoneticEvidenceStatus.Tentative),
+    "'or' ends inside the kana token 're': expose an ambiguous cut at 2");
+
+var ambiguousHyphen = PhoneticStructureAnalyzer.Analyze("de-ta");
+Check(ambiguousHyphen.Boundaries.Any(b =>
+        b.Position == 2 &&
+        b.Status == PhoneticEvidenceStatus.Tentative),
+    "hyphen should not be a confirmed language cut");
+Check(ambiguousHyphen.ReviewWindows.Any(w =>
+        w.Start <= 2 && w.End >= 4),
+    "hyphen must request bilateral review");
+
+var ambiguousPeriod = PhoneticStructureAnalyzer.Analyze("node.js");
+Check(ambiguousPeriod.Boundaries.Any(b =>
+        b.Position == 4 &&
+        b.Status == PhoneticEvidenceStatus.Tentative),
+    "'.' must be an ambiguous cut even within an apparent code token");
+Check(PhoneticStructureAnalyzer.Analyze("nihongo.").Boundaries.Any(b =>
+        b.Position == 7 &&
+        b.Status == PhoneticEvidenceStatus.Tentative),
+    "trailing period is not automatically a confirmed English boundary");
+
+var firmComma = PhoneticStructureAnalyzer.Analyze("oreha,commit");
+Check(firmComma.Boundaries.Any(b =>
+        b.Position == 5 &&
+        b.Status == PhoneticEvidenceStatus.Confirmed),
+    "explicit comma must yield a confirmed structural cut");
+
+var unreadableEnglish = PhoneticStructureAnalyzer.Analyze("englishwomanabu");
+Check(unreadableEnglish.Groups.Any(g =>
+        g.Kind == "Unresolved" &&
+        g.Status == PhoneticEvidenceStatus.Tentative),
+    "unreadable English must not be split into firmly committed kana");
+Check(unreadableEnglish.ReviewWindows.Any(w =>
+        w.Start == 0 && w.End >= 10),
+    "unreadable English must trigger bilateral review including prefix/suffix");
+
+var fourStateParameters = new EvidenceLatticeParameters(
+    UsePhoneticFirstHybrid: true);
+var fourStateTrace = new EvidenceLatticeSession(
+    fourStateParameters).Update("oreha");
+Check(fourStateTrace.Frames[^1].PhoneticStructure is not null,
+    "four-state phonetic annotations must appear in incremental JSON frames");
+var fourStateJson = EvidenceLatticeResearchExporter.ToJson(
+    EvidenceLatticeResearchExporter.CreateReport(
+        fourStateTrace, fourStateParameters));
+Check(fourStateJson.Contains("iblab-phonetic-four-state-v0.8",
+        StringComparison.Ordinal) &&
+      fourStateJson.Contains("reviewWindows", StringComparison.Ordinal),
+    "research JSON must identify experiment and include review windows");
+var baselineNoAnnotations = new EvidenceLatticeSession().Update("oreha");
+Check(baselineNoAnnotations.Frames[^1].PhoneticStructure is null,
+    "v0.6 baseline must not implicitly enable four-state analysis");
+
 if (failures.Count > 0)
 {
     Console.Error.WriteLine($"FAILED: {failures.Count}");
