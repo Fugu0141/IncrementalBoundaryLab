@@ -100,7 +100,8 @@ public sealed class StreamHybridSession : IResearchSession
         var output = committedOutput +
             (_committedLength == _input.Length ? "" :
                 lastPath?.Output ?? "");
-        var structure = StreamHybridStructure.Analyze(active, result.Paths);
+        var structure = StreamHybridStructure.Analyze(
+            active, result.Paths, result.OrthographicCodeOnsets);
         var frame = new EvidenceLatticeFrame(
             _input.Length, _input, _committedLength, committedOutput,
             display, result.PhoneticPreview,
