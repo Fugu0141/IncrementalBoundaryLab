@@ -142,7 +142,13 @@ foreach (var token in new[]
     var newResult = RunOffline(token, hybrid: true);
     Check(newResult.Output == oldResult.Output,
         "hybrid regression on " + token + ": " +
-        newResult.Output + " != " + oldResult.Output);
+        newResult.Output + " != " + oldResult.Output +
+        " | segments: " +
+        string.Join(" / ", newResult.CommittedSegments
+            .Concat(newResult.ActiveBestSegments)
+            .Select(e => e.Raw + "=>" + e.Output + ":" +
+                e.Kind + ":" + e.Evidence + ":" +
+                e.LocalScore.ToString("F2"))));
 }
 
 var hybridMixed = RunOffline(
