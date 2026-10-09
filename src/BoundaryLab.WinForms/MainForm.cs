@@ -38,9 +38,11 @@ public sealed class MainForm : Form
                 _mozc);
 
         Text = "Incremental Boundary Lab — " +
-            (_session.Parameters.UsePhoneticFirstHybrid
-                ? "Four-state Phonetic Hybrid v0.8 (research diagnostics)"
-                : "Mozc Responsibility IME v0.6 baseline");
+            (_session is StreamHybridSession
+                ? "Stream Hybrid v1 (new engine)"
+                : _session.Parameters.UsePhoneticFirstHybrid
+                    ? "Four-state Phonetic Hybrid v0.8 (research diagnostics)"
+                    : "Mozc Responsibility IME v0.6 baseline");
         Width = 1460;
         Height = 940;
         MinimumSize = new Size(1060, 760);
