@@ -10,7 +10,9 @@ public static class EvidenceLatticeResearchExporter
         EvidenceLatticeParameters parameters) =>
         new(
             "incremental-boundary-lab/mozc-responsibility-v1",
-            EvidenceLatticeSession.AlgorithmVersion,
+            parameters.UsePhoneticFirstHybrid
+                ? "iblab-phonetic-first-hybrid-v0.7"
+                : EvidenceLatticeSession.AlgorithmVersion,
             DateTimeOffset.UtcNow,
             result.Input,
             result.Output,
