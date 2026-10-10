@@ -1,0 +1,118 @@
+{
+  "study": "H7 systematic mixed-language input audit",
+  "date": "2026-10-10",
+  "scope": "Python offline H5/H6/H7 ranked English span proxies, not the C# lattice, Mozc or an IME",
+  "seed_values": [
+    20261010,
+    20261011,
+    20261012,
+    20261013,
+    20261014
+  ],
+  "cases_per_seed": 5686,
+  "model_evaluations": 28430,
+  "randomized_structural_gold_checks": 100000,
+  "structural_inconsistencies": 0,
+  "repeat_full_json_sha256": "5894202445994c937a7120abdc2dddafe8c45ce3b202fa6b060cc0bfd14eb6ab",
+  "repeat_summary_json_sha256": "525a7bc17e02231b2e4c73d222bf2fd29806bf7dba29fab122a2b5e45223c8f5",
+  "category_totals": {
+    "start": {
+      "n": 3240,
+      "H5": 1797,
+      "H6": 96,
+      "H7": 1243
+    },
+    "middle": {
+      "n": 3780,
+      "H5": 1878,
+      "H6": 2659,
+      "H7": 2659
+    },
+    "end": {
+      "n": 3240,
+      "H5": 1563,
+      "H6": 318,
+      "H7": 1531
+    },
+    "english_only": {
+      "n": 270,
+      "H5": 136,
+      "H6": 21,
+      "H7": 37
+    },
+    "two_islands": {
+      "n": 1620,
+      "H5": 0,
+      "H6": 0,
+      "H7": 0
+    },
+    "adjacent_english": {
+      "n": 1620,
+      "H5": 0,
+      "H6": 0,
+      "H7": 0
+    },
+    "romanization_pairs": {
+      "n": 3240,
+      "H5": 1504,
+      "H6": 2190,
+      "H7": 2190
+    },
+    "short_literal": {
+      "n": 1440,
+      "H5": 0,
+      "H6": 0,
+      "H7": 0
+    },
+    "symbols": {
+      "n": 1620,
+      "H5": 0,
+      "H6": 0,
+      "H7": 0
+    },
+    "case_variants": {
+      "n": 1080,
+      "H5": 1,
+      "H6": 19,
+      "H7": 19
+    },
+    "no_english": {
+      "n": 4760,
+      "H5": 51,
+      "H6": 38,
+      "H7": 38,
+      "measure": "false English candidates, not exact matches"
+    },
+    "nonsense_literal": {
+      "n": 1440,
+      "H5": 102,
+      "H6": 74,
+      "H7": 88
+    },
+    "inside_mora": {
+      "n": 1080,
+      "H5": 0,
+      "H6": 0,
+      "H7": 0
+    }
+  },
+  "dual_romaji": {
+    "paired_contexts_per_seed": 324,
+    "total_repeated_pairs": 1620,
+    "both_spellings_exact": {
+      "H5": 719,
+      "H6": 1074,
+      "H7": 1074
+    }
+  },
+  "limitations": [
+    "Results contain repeated word types, not independent 28,430 natural utterances",
+    "Two English islands cannot be globally represented by the single-span ranker",
+    "English-only inputs lack Japanese/English switch boundaries",
+    "The character score is case-sensitive while C# normalization differs",
+    "Candidate scanner requires 7-24 ASCII letters and limits punctuation cuts",
+    "The H7 correction is post-hoc exploratory, not an independent validation",
+    "The 100,000 randomized checks audit gold construction, not model predictions",
+    "No C#/.NET build, real Mozc, Windows TSF, or interactive session stress tested"
+  ]
+}
