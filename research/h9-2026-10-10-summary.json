@@ -1,0 +1,448 @@
+{
+  "schema": "ibl-h9-summary-v1",
+  "date": "2026-10-10",
+  "layer": "A: offline Python proxy; not C# or real IME",
+  "corpus": "Same previously explored H7 synthetic 13-stratum set, reused H8 raw candidates",
+  "seeds": [
+    20261010,
+    20261011,
+    20261012,
+    20261013,
+    20261014
+  ],
+  "per_seed_cases": 5686,
+  "per_seed_unique_raw": 5030,
+  "candidate_generation_unchanged": true,
+  "development_config": "H8 recipe from 6 options; H9 Japanese-gain/context/island-penalty from fixed 18 combos; dev only",
+  "category_totals": {
+    "start": {
+      "H7_single": {
+        "exact": 1243,
+        "total": 3240,
+        "rate": 0.3836,
+        "false_cases": 0,
+        "hit_spans": 1243,
+        "gold_spans": 3240
+      },
+      "H8_global": {
+        "exact": 1725,
+        "total": 3240,
+        "rate": 0.5324,
+        "false_cases": 0,
+        "hit_spans": 1725,
+        "gold_spans": 3240
+      },
+      "H9_joint": {
+        "exact": 1819,
+        "total": 3240,
+        "rate": 0.5614,
+        "false_cases": 0,
+        "hit_spans": 1819,
+        "gold_spans": 3240
+      }
+    },
+    "middle": {
+      "H7_single": {
+        "exact": 2659,
+        "total": 3780,
+        "rate": 0.7034,
+        "false_cases": 0,
+        "hit_spans": 2659,
+        "gold_spans": 3780
+      },
+      "H8_global": {
+        "exact": 1543,
+        "total": 3780,
+        "rate": 0.4082,
+        "false_cases": 0,
+        "hit_spans": 1543,
+        "gold_spans": 3780
+      },
+      "H9_joint": {
+        "exact": 2540,
+        "total": 3780,
+        "rate": 0.672,
+        "false_cases": 0,
+        "hit_spans": 2540,
+        "gold_spans": 3780
+      }
+    },
+    "end": {
+      "H7_single": {
+        "exact": 1531,
+        "total": 3240,
+        "rate": 0.4725,
+        "false_cases": 0,
+        "hit_spans": 1531,
+        "gold_spans": 3240
+      },
+      "H8_global": {
+        "exact": 1346,
+        "total": 3240,
+        "rate": 0.4154,
+        "false_cases": 0,
+        "hit_spans": 1346,
+        "gold_spans": 3240
+      },
+      "H9_joint": {
+        "exact": 2177,
+        "total": 3240,
+        "rate": 0.6719,
+        "false_cases": 0,
+        "hit_spans": 2177,
+        "gold_spans": 3240
+      }
+    },
+    "english_only": {
+      "H7_single": {
+        "exact": 37,
+        "total": 270,
+        "rate": 0.137,
+        "false_cases": 0,
+        "hit_spans": 37,
+        "gold_spans": 270
+      },
+      "H8_global": {
+        "exact": 147,
+        "total": 270,
+        "rate": 0.5444,
+        "false_cases": 0,
+        "hit_spans": 147,
+        "gold_spans": 270
+      },
+      "H9_joint": {
+        "exact": 143,
+        "total": 270,
+        "rate": 0.5296,
+        "false_cases": 0,
+        "hit_spans": 143,
+        "gold_spans": 270
+      }
+    },
+    "two_islands": {
+      "H7_single": {
+        "exact": 0,
+        "total": 1620,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 502,
+        "gold_spans": 3240
+      },
+      "H8_global": {
+        "exact": 330,
+        "total": 1620,
+        "rate": 0.2037,
+        "false_cases": 0,
+        "hit_spans": 1420,
+        "gold_spans": 3240
+      },
+      "H9_joint": {
+        "exact": 583,
+        "total": 1620,
+        "rate": 0.3599,
+        "false_cases": 0,
+        "hit_spans": 1867,
+        "gold_spans": 3240
+      }
+    },
+    "adjacent_english": {
+      "H7_single": {
+        "exact": 0,
+        "total": 1620,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 82,
+        "gold_spans": 3240
+      },
+      "H8_global": {
+        "exact": 30,
+        "total": 1620,
+        "rate": 0.0185,
+        "false_cases": 0,
+        "hit_spans": 379,
+        "gold_spans": 3240
+      },
+      "H9_joint": {
+        "exact": 39,
+        "total": 1620,
+        "rate": 0.0241,
+        "false_cases": 0,
+        "hit_spans": 278,
+        "gold_spans": 3240
+      }
+    },
+    "romanization_pairs": {
+      "H7_single": {
+        "exact": 2190,
+        "total": 3240,
+        "rate": 0.6759,
+        "false_cases": 0,
+        "hit_spans": 2190,
+        "gold_spans": 3240
+      },
+      "H8_global": {
+        "exact": 1119,
+        "total": 3240,
+        "rate": 0.3454,
+        "false_cases": 0,
+        "hit_spans": 1129,
+        "gold_spans": 3240
+      },
+      "H9_joint": {
+        "exact": 2085,
+        "total": 3240,
+        "rate": 0.6435,
+        "false_cases": 0,
+        "hit_spans": 2093,
+        "gold_spans": 3240
+      }
+    },
+    "short_literal": {
+      "H7_single": {
+        "exact": 0,
+        "total": 1440,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 0,
+        "gold_spans": 1440
+      },
+      "H8_global": {
+        "exact": 0,
+        "total": 1440,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 0,
+        "gold_spans": 1440
+      },
+      "H9_joint": {
+        "exact": 0,
+        "total": 1440,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 0,
+        "gold_spans": 1440
+      }
+    },
+    "symbols": {
+      "H7_single": {
+        "exact": 0,
+        "total": 1620,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 0,
+        "gold_spans": 1620
+      },
+      "H8_global": {
+        "exact": 0,
+        "total": 1620,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 0,
+        "gold_spans": 1620
+      },
+      "H9_joint": {
+        "exact": 0,
+        "total": 1620,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 0,
+        "gold_spans": 1620
+      }
+    },
+    "case_variants": {
+      "H7_single": {
+        "exact": 19,
+        "total": 1080,
+        "rate": 0.0176,
+        "false_cases": 0,
+        "hit_spans": 19,
+        "gold_spans": 1080
+      },
+      "H8_global": {
+        "exact": 0,
+        "total": 1080,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 0,
+        "gold_spans": 1080
+      },
+      "H9_joint": {
+        "exact": 48,
+        "total": 1080,
+        "rate": 0.0444,
+        "false_cases": 0,
+        "hit_spans": 48,
+        "gold_spans": 1080
+      }
+    },
+    "no_english": {
+      "H7_single": {
+        "exact": 4722,
+        "total": 4760,
+        "rate": 0.992,
+        "false_cases": 38,
+        "hit_spans": 0,
+        "gold_spans": 0
+      },
+      "H8_global": {
+        "exact": 4677,
+        "total": 4760,
+        "rate": 0.9826,
+        "false_cases": 83,
+        "hit_spans": 0,
+        "gold_spans": 0
+      },
+      "H9_joint": {
+        "exact": 4710,
+        "total": 4760,
+        "rate": 0.9895,
+        "false_cases": 50,
+        "hit_spans": 0,
+        "gold_spans": 0
+      }
+    },
+    "nonsense_literal": {
+      "H7_single": {
+        "exact": 88,
+        "total": 1440,
+        "rate": 0.0611,
+        "false_cases": 0,
+        "hit_spans": 88,
+        "gold_spans": 1440
+      },
+      "H8_global": {
+        "exact": 16,
+        "total": 1440,
+        "rate": 0.0111,
+        "false_cases": 0,
+        "hit_spans": 16,
+        "gold_spans": 1440
+      },
+      "H9_joint": {
+        "exact": 124,
+        "total": 1440,
+        "rate": 0.0861,
+        "false_cases": 0,
+        "hit_spans": 124,
+        "gold_spans": 1440
+      }
+    },
+    "inside_mora": {
+      "H7_single": {
+        "exact": 0,
+        "total": 1080,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 0,
+        "gold_spans": 1080
+      },
+      "H8_global": {
+        "exact": 0,
+        "total": 1080,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 0,
+        "gold_spans": 1080
+      },
+      "H9_joint": {
+        "exact": 0,
+        "total": 1080,
+        "rate": 0.0,
+        "false_cases": 0,
+        "hit_spans": 0,
+        "gold_spans": 1080
+      }
+    }
+  },
+  "micro_language_boundary": {
+    "H7_single": {
+      "TP": 20077,
+      "FP": 5652,
+      "FN": 19943,
+      "micro_F1": 0.610717
+    },
+    "H8_global": {
+      "TP": 19881,
+      "FP": 11930,
+      "FN": 20139,
+      "micro_F1": 0.553549
+    },
+    "H9_joint": {
+      "TP": 24037,
+      "FP": 8084,
+      "FN": 15983,
+      "micro_F1": 0.666389
+    }
+  },
+  "seed_development": [
+    {
+      "seed": 20261010,
+      "h8_recipe": "phonetic_only",
+      "h8_length_bonus": 0.04,
+      "h9_japanese_gain": 0.02,
+      "h9_context_boost": 0.5,
+      "h9_island_penalty": 0.0,
+      "dev_macro": 0.4822222222222222,
+      "dev_false_cases": 8,
+      "dev_neg_total": 165
+    },
+    {
+      "seed": 20261011,
+      "h8_recipe": "phonetic_only",
+      "h8_length_bonus": 0.0,
+      "h9_japanese_gain": 0.02,
+      "h9_context_boost": 0.5,
+      "h9_island_penalty": 0.0,
+      "dev_macro": 0.5344444444444444,
+      "dev_false_cases": 8,
+      "dev_neg_total": 165
+    },
+    {
+      "seed": 20261012,
+      "h8_recipe": "phonetic_only",
+      "h8_length_bonus": 0.04,
+      "h9_japanese_gain": 0.02,
+      "h9_context_boost": 0.5,
+      "h9_island_penalty": 0.0,
+      "dev_macro": 0.5755555555555556,
+      "dev_false_cases": 7,
+      "dev_neg_total": 165
+    },
+    {
+      "seed": 20261013,
+      "h8_recipe": "phonetic_only",
+      "h8_length_bonus": 0.04,
+      "h9_japanese_gain": 0.05,
+      "h9_context_boost": 1.0,
+      "h9_island_penalty": 0.0,
+      "dev_macro": 0.5622222222222223,
+      "dev_false_cases": 3,
+      "dev_neg_total": 165
+    },
+    {
+      "seed": 20261014,
+      "h8_recipe": "phonetic_only",
+      "h8_length_bonus": 0.0,
+      "h9_japanese_gain": 0.02,
+      "h9_context_boost": 1.0,
+      "h9_island_penalty": 0.0,
+      "dev_macro": 0.5833333333333334,
+      "dev_false_cases": 7,
+      "dev_neg_total": 165
+    }
+  ],
+  "raw_full_result_sha256": "54d0847f5b6f95101c2130887e2094f84b497e5dbde65e9e2c4d7ee7038245dd",
+  "verification": {
+    "h9_targeted_tests_passed": 14,
+    "repeated_original_h9_full_json_identical": true,
+    "frozen_previous_h8_reports_reproduced": true
+  },
+  "caveats": [
+    "54 English OOV types recur across five seeds; counts are not independent users",
+    "Previously explored H7 templates are not blind natural text",
+    "Japanese paths only approximate romaji phonotactics, not lexical/kanji grammar",
+    "Short English and symbol-adjacent words are not handled by original candidate scanner",
+    "Development false-case-rate budget is not a test distribution guarantee",
+    "No C# .NET build, Windows IME interaction or per-keystroke latency measured"
+  ]
+}
