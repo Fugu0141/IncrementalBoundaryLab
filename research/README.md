@@ -2,6 +2,12 @@
 
 このディレクトリには実験を時系列で累積します。新しい成果は個別の日付付きノートにし、トップレベルの [README研究ログ](../README.md) に1行追加してください。
 
+## 2026-10-10 — H4 false-candidate-budget study
+
+- [H4の独立実験と留保事項](2026-10-10-h4-error-budget-study.md) — 5seedで候補再現率と日本語の誤候補入力数を比較。制約は開発データの経験的な上限であり、未使用データでの保証ではない
+- [再現用Pythonスクリプト](h4_error_budget_experiment.py) / [独立テスト6件](h4_error_budget_selftest.py) / [機械可読の集計](h4-error-budget-2026-10-10-summary.json)
+- H1と同じ54未知英語を比較。候補数制限は探索量を削るが、正解候補も削る。C# / 実IMEへの効果は未検証
+
 ## 2026-10-10 — Out-of-vocabulary English candidate study (H1/H2)
 
 - [詳細評価・仮説・制約](2026-10-10-oov-character-candidates.md)
