@@ -4,7 +4,7 @@
 
 ## 標準の研究検証方法
 
-- **[研究検証標準 v1.0](../docs/research-evaluation-standard.md)** — H1〜H7とCodex追試を整理した、データ・境界・ローマ字入力・性能・レポートの統一手順
+- **[研究検証標準 v1.1](../docs/research-evaluation-standard.md)** — H1〜H7とCodex追試を整理した、データ・境界・ローマ字入力・性能・レポートの統一手順
 - **[研究評価レポート雛形](templates/evaluation-report-template.md)** — Hypothesis、コマンド、評価対象、13分類、候補段階別の生存、F1/誤候補、回帰・再現性を統一して記録
 - H4〜H7の未統合研究ブランチは標準文書からPRへリンク。今後の計測ではPython候補研究とC#実IMEを混同しない
 
