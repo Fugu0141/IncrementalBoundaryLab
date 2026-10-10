@@ -21,7 +21,7 @@ from h4_error_budget_experiment import japanese_negative_streams
 from h5_phonotactic_context_experiment import (construct_models, phonology,
     load_kana_tokens, decorate, score_edges, RECIPES, score, selected, calibrate)
 from h6_boundary_alias_experiment import ALIASES, romaji_table
-from h7_mixed_stream_stress import generate_cases, h7_value, h7_select, h7_calibrate
+from h7_frozen_reference_20261010 import generate_cases, h7_value, h7_select, h7_calibrate
 
 SEEDS=(20261010,20261011,20261012,20261013,20261014)
 BUDGET=.05
