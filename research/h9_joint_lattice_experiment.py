@@ -249,5 +249,3 @@ if __name__=='__main__':
     ap.add_argument('--limit',type=int)
     args=ap.parse_args()
     run(args.root,args.output,args.seeds,args.limit)
-
-END_H9_PYTHO
