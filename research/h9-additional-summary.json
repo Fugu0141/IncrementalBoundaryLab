@@ -1,0 +1,195 @@
+{
+  "schema": "H9-followup-aggregated-v1",
+  "date": "2026-10-10",
+  "layer": "A: offline Python proxy",
+  "description": "Summary derived from the published H9 additional evaluation report, 12 categories, 1,094 unique synthetic strings evaluated at 5 training seeds; not a natural-text holdout",
+  "seeds": [
+    20261010,
+    20261011,
+    20261012,
+    20261013,
+    20261014
+  ],
+  "unique_raw_per_seed": 1094,
+  "total_evaluations": 5470,
+  "english_oov_unique_types": 54,
+  "model_comparison_metrics": "Exact set of chosen English spans equals synthetic gold English spans; for Japanese-only cases, no English spans selected.",
+  "categories": [
+    {
+      "name": "英語文頭（新文脈）",
+      "n": 540,
+      "top_path_exact": {
+        "H7": 180,
+        "H8": 240,
+        "H9": 251
+      },
+      "gold_all_in_raw_candidates": 430,
+      "gold_all_admitted": 388
+    },
+    {
+      "name": "英語文中（新文脈）",
+      "n": 540,
+      "top_path_exact": {
+        "H7": 318,
+        "H8": 215,
+        "H9": 309
+      },
+      "gold_all_in_raw_candidates": 430,
+      "gold_all_admitted": 388
+    },
+    {
+      "name": "英語文末（新文脈）",
+      "n": 540,
+      "top_path_exact": {
+        "H7": 255,
+        "H8": 265,
+        "H9": 362
+      },
+      "gold_all_in_raw_candidates": 490,
+      "gold_all_admitted": 444
+    },
+    {
+      "name": "英語のみ（既存対照）",
+      "n": 270,
+      "top_path_exact": {
+        "H7": 37,
+        "H8": 147,
+        "H9": 143
+      },
+      "gold_all_in_raw_candidates": 245,
+      "gold_all_admitted": 222
+    },
+    {
+      "name": "英語2区間",
+      "n": 270,
+      "top_path_exact": {
+        "H7": 0,
+        "H8": 48,
+        "H9": 60
+      },
+      "gold_all_in_raw_candidates": 140,
+      "gold_all_admitted": 111
+    },
+    {
+      "name": "英語3区間",
+      "n": 270,
+      "top_path_exact": {
+        "H7": 0,
+        "H8": 21,
+        "H9": 40
+      },
+      "gold_all_in_raw_candidates": 125,
+      "gold_all_admitted": 92
+    },
+    {
+      "name": "英語4区間（上限超過）",
+      "n": 270,
+      "top_path_exact": {
+        "H7": 0,
+        "H8": 0,
+        "H9": 0
+      },
+      "gold_all_in_raw_candidates": 115,
+      "gold_all_admitted": 81
+    },
+    {
+      "name": "別表記ペア（既存形式の対照）",
+      "n": 540,
+      "top_path_exact": {
+        "H7": 359,
+        "H8": 193,
+        "H9": 345
+      },
+      "gold_all_in_raw_candidates": 490,
+      "gold_all_admitted": 444
+    },
+    {
+      "name": "日本語のみ（新しい連結）",
+      "n": 1530,
+      "top_path_exact": {
+        "H7": 1519,
+        "H8": 1494,
+        "H9": 1515
+      },
+      "gold_all_in_raw_candidates": null,
+      "gold_all_admitted": null
+    },
+    {
+      "name": "短い英語",
+      "n": 160,
+      "top_path_exact": {
+        "H7": 0,
+        "H8": 0,
+        "H9": 0
+      },
+      "gold_all_in_raw_candidates": 0,
+      "gold_all_admitted": 0
+    },
+    {
+      "name": "記号後続英語",
+      "n": 270,
+      "top_path_exact": {
+        "H7": 0,
+        "H8": 0,
+        "H9": 0
+      },
+      "gold_all_in_raw_candidates": 0,
+      "gold_all_admitted": 0
+    },
+    {
+      "name": "大小文字が混ざる英語",
+      "n": 270,
+      "top_path_exact": {
+        "H7": 1,
+        "H8": 0,
+        "H9": 3
+      },
+      "gold_all_in_raw_candidates": 155,
+      "gold_all_admitted": 29
+    }
+  ],
+  "known_h9_constraints": {
+    "max_english_edges": 3,
+    "max_english_edges_per_start": 4,
+    "english_scanner_min_length": 7,
+    "english_scanner_max_length": 24,
+    "long_japanese_romaji_1200_chars": "RecursionError in all 5 seeds",
+    "long_400_and_800": "Pass"
+  },
+  "false_english_on_japanese_only": {
+    "denominator": 1530,
+    "H7": 11,
+    "H8": 36,
+    "H9": 15
+  },
+  "performance_path_only_median_ms": {
+    "len40": {
+      "H8": 0.072,
+      "H9": 0.173
+    },
+    "len80": {
+      "H8": 0.15,
+      "H9": 0.398
+    },
+    "len160": {
+      "H8": 0.318,
+      "H9": 1.103
+    },
+    "len320": {
+      "H8": 0.652,
+      "H9": 2.109
+    }
+  },
+  "reproducibility": {
+    "algorithmic_hash_sha256": "12d12742558eb849d1c53e343ae7ef121593e01ef8169fdaf1f07662fa5f1a3e",
+    "matches_second_run": true,
+    "excludes_performance_timings": true
+  },
+  "caveats": [
+    "Synthetic new context not independently human annotated",
+    "Same 54 OOV English word types as H1-H9",
+    "Some alias/English-only controls reused",
+    "Complete 5-seed JSON and performance logs supplied in the research attachment archive",
+    "No C# / TSF / Mozc / actual key-event E2E evaluation performed"
+  ]
+}
