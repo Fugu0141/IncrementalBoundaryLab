@@ -2,6 +2,12 @@
 
 このディレクトリには実験を時系列で累積します。新しい成果は個別の日付付きノートにし、トップレベルの [README研究ログ](../README.md) に1行追加してください。
 
+## 2026-10-10 — H6 exact boundary + alternative romaji study
+
+- [区切り位置・表記揺れの研究レポート](2026-10-10-h6-boundary-alias-study.md) — 生入力座標での日本語⇔英語境界F1、±1文字許容、誤候補、aliasペア正解率の比較
+- [H6再現コード](h6_boundary_alias_experiment.py) / [8件の単体テスト](h6_boundary_alias_selftest.py) / [集計JSON](h6-boundary-alias-2026-10-10-summary.json)
+- 音韻表にshi/si等の両方式が存在することを検証し、ji/zi対応漏れも記録。H5より境界完全一致は改善する一方、日本語誤候補・±1文字以内の指標には回帰がある。C# IME未統合。H5研究PRに依存
+
 ## 2026-10-10 — H5 phonotactic + boundary candidate study
 
 - [研究ノート（日本語）](2026-10-10-h5-phonotactic-context-study.md)
