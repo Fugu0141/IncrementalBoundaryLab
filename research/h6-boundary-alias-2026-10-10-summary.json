@@ -1,0 +1,184 @@
+{
+  "schema": "ibl-h6-boundary-v1",
+  "date": "2026-10-10",
+  "experiments": "offline Python H5 vs H6 candidate ranker, held-out word groups, synthetic streams",
+  "environment": "Python 3.13; cmudict 1.1.3; .NET unavailable",
+  "per_seed_alias_english_pairs": 54,
+  "per_seed_alias_english_positive_cases": 108,
+  "per_seed_alias_japanese_only_cases": 68,
+  "caveats": [
+    "Raw romaji offsets are computed from concatenated pieces; canonical kana positions are NOT substituted",
+    "Boundary F1 measures only Japanese-English language switches in top-ranked English span, not all Japanese word boundaries",
+    "Negative streams reuse Japanese word types, and seed partitions reuse same 54 English words",
+    "Development 5% false-candidate limit does not guarantee this rate on evaluation streams",
+    "H6 re-ranks the H5-generated edges; it cannot recover candidates never generated",
+    "H6 source is Python-only, not integrated into C# TSF/Mozc"
+  ],
+  "metrics": [
+    {
+      "seed": 20261010,
+      "alias_test": {
+        "h5": {
+          "exact_spans": 46,
+          "boundary_f1": 0.6887,
+          "gold_in_top4": 92,
+          "within_one": 86,
+          "false_japanese_cases": 1,
+          "pairs_both_exact": 22
+        },
+        "h6": {
+          "exact_spans": 66,
+          "boundary_f1": 0.7874,
+          "gold_in_top4": 91,
+          "within_one": 78,
+          "false_japanese_cases": 0,
+          "pairs_both_exact": 33
+        }
+      },
+      "original_h5_template": {
+        "h5": {
+          "exact_spans": 27,
+          "boundary_f1": 0.7308,
+          "false_japanese_cases": 0
+        },
+        "h6": {
+          "exact_spans": 32,
+          "boundary_f1": 0.7905,
+          "false_japanese_cases": 0
+        }
+      }
+    },
+    {
+      "seed": 20261011,
+      "alias_test": {
+        "h5": {
+          "exact_spans": 52,
+          "boundary_f1": 0.7101,
+          "gold_in_top4": 85,
+          "within_one": 83,
+          "false_japanese_cases": 2,
+          "pairs_both_exact": 26
+        },
+        "h6": {
+          "exact_spans": 74,
+          "boundary_f1": 0.8259,
+          "gold_in_top4": 86,
+          "within_one": 76,
+          "false_japanese_cases": 1,
+          "pairs_both_exact": 37
+        }
+      },
+      "original_h5_template": {
+        "h5": {
+          "exact_spans": 29,
+          "boundary_f1": 0.7379,
+          "false_japanese_cases": 0
+        },
+        "h6": {
+          "exact_spans": 33,
+          "boundary_f1": 0.7961,
+          "false_japanese_cases": 0
+        }
+      }
+    },
+    {
+      "seed": 20261012,
+      "alias_test": {
+        "h5": {
+          "exact_spans": 56,
+          "boundary_f1": 0.7177,
+          "gold_in_top4": 84,
+          "within_one": 84,
+          "false_japanese_cases": 3,
+          "pairs_both_exact": 27
+        },
+        "h6": {
+          "exact_spans": 76,
+          "boundary_f1": 0.8093,
+          "gold_in_top4": 91,
+          "within_one": 78,
+          "false_japanese_cases": 7,
+          "pairs_both_exact": 38
+        }
+      },
+      "original_h5_template": {
+        "h5": {
+          "exact_spans": 29,
+          "boundary_f1": 0.7064,
+          "false_japanese_cases": 7
+        },
+        "h6": {
+          "exact_spans": 35,
+          "boundary_f1": 0.7143,
+          "false_japanese_cases": 15
+        }
+      }
+    },
+    {
+      "seed": 20261013,
+      "alias_test": {
+        "h5": {
+          "exact_spans": 57,
+          "boundary_f1": 0.6709,
+          "gold_in_top4": 89,
+          "within_one": 87,
+          "false_japanese_cases": 20,
+          "pairs_both_exact": 28
+        },
+        "h6": {
+          "exact_spans": 75,
+          "boundary_f1": 0.7991,
+          "gold_in_top4": 93,
+          "within_one": 77,
+          "false_japanese_cases": 8,
+          "pairs_both_exact": 37
+        }
+      },
+      "original_h5_template": {
+        "h5": {
+          "exact_spans": 32,
+          "boundary_f1": 0.7094,
+          "false_japanese_cases": 12
+        },
+        "h6": {
+          "exact_spans": 37,
+          "boundary_f1": 0.7395,
+          "false_japanese_cases": 14
+        }
+      }
+    },
+    {
+      "seed": 20261014,
+      "alias_test": {
+        "h5": {
+          "exact_spans": 51,
+          "boundary_f1": 0.6837,
+          "gold_in_top4": 80,
+          "within_one": 84,
+          "false_japanese_cases": 8,
+          "pairs_both_exact": 25
+        },
+        "h6": {
+          "exact_spans": 68,
+          "boundary_f1": 0.7696,
+          "gold_in_top4": 83,
+          "within_one": 70,
+          "false_japanese_cases": 5,
+          "pairs_both_exact": 34
+        }
+      },
+      "original_h5_template": {
+        "h5": {
+          "exact_spans": 29,
+          "boundary_f1": 0.6847,
+          "false_japanese_cases": 10
+        },
+        "h6": {
+          "exact_spans": 32,
+          "boundary_f1": 0.7018,
+          "false_japanese_cases": 12
+        }
+      }
+    }
+  ]
+}
