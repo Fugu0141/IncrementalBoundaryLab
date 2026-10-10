@@ -7,6 +7,7 @@
 
 | 日付 | 研究内容 | 確認できたこと / 留保 | 資料 |
 | --- | --- | --- | --- |
+| 2026-10-10 | **Codexによるv1.3独立検証** | C#既存5スイートとPython5テスト成功、RCR中心のストレス16,164件。H1の数値を再現。`customer`等は英語候補生成が不足。H2/H3は未証明、Claude 263件は未再現 | [実験ブランチの検証レポート](https://github.com/Fugu0141/IncrementalBoundaryLab/blob/experiment/stream-hybrid-v1.3-latin-morphology/research/2026-10-10-codex-validation-report.md) |
 | 2026-10-10 | **H1: 未知英語の文字統計による候補生成** | 英語54語で固定語尾のみ5語、文字モデル32語、候補併用34語。候補生成の測定でありIMEの最終変換精度は未測定。5種類のデータ分割で感度確認 | [研究ノート](research/2026-10-10-oov-character-candidates.md) / [再現コード](research/oov_character_model_experiment.py) |
 | 2026-10-09 | **v1.3 Claude評価ハーネス（添付研究ブランチ）** | 263合成ケースの報告で未知英語の弱点を発見。ただしC#独立再実行前・gold境界ラベル誤り1件確認。**mainには未統合** | [検証と留保](research/2026-10-10-oov-character-candidates.md) |
 | 2026-10-09 | **Stream Hybrid v1.1–v1.3** | 候補境界の接続・未知Latin形態候補・可逆的な経路保持を検討。各方式は別ブランチ | [v1.3実験ブランチ](https://github.com/Fugu0141/IncrementalBoundaryLab/tree/experiment/stream-hybrid-v1.3-latin-morphology) |
