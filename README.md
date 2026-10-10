@@ -2,7 +2,7 @@
 
 ## 統一研究検証手順（2026-10-10）
 
-今後、アルゴリズムやIMEの性能を評価するときは **[研究検証標準 v1.0](docs/research-evaluation-standard.md)** に従い、研究結果は [評価レポート雛形](research/templates/evaluation-report-template.md) で報告します。候補検出率・境界精度・ローマ字表記差・逐次入力・実IMEテストを別の指標として扱い、評価規模とデータの独立性を明記します。
+今後、アルゴリズムやIMEの性能を評価するときは **[研究検証標準 v1.1](docs/research-evaluation-standard.md)** に従い、研究結果は [評価レポート雛形](research/templates/evaluation-report-template.md) で報告します。候補検出率・境界精度・ローマ字表記差・逐次入力・実IMEテストを別の指標として扱い、評価規模とデータの独立性を明記します。
 
 ## Research log / 研究履歴（累積）
 
