@@ -2,6 +2,13 @@
 
 このディレクトリには実験を時系列で累積します。新しい成果は個別の日付付きノートにし、トップレベルの [README研究ログ](../README.md) に1行追加してください。
 
+## 2026-10-10 — H8 global multi-English span path study
+
+- [詳細レポート](2026-10-10-h8-global-multispan-study.md) — 英語位置別、2つの英語区間、別表記、日本語誤候補の正負双方の結果を保存
+- [再現コード](h8_global_path_experiment.py) / [13件のテスト](h8_global_path_selftest.py) / [5分割の集計JSON](h8-2026-10-10-summary.json)
+- H7の同じ合成コーパスで28,430モデル評価、完全な結果は研究ZIPにも保存。全体経路探索で複数区間の表現は可能になったが、文中精度・日本語誤候補・別表記精度に回帰があり、実用アルゴリズムへ統合しない
+- H7 PR #5に依存する独立研究ブランチ。C#/.NET・実IMEは今回未検証
+
 ## 2026-10-10 — H7 large-scale mixed input stress study
 
 - [H7レポート](2026-10-10-h7-mixed-stream-stress.md) — 文頭/文中/文末/純英語/複数英語/コード記号/小文字大文字/ローマ字別表記など13分類の測定結果と重大な回帰
