@@ -2,6 +2,13 @@
 
 このディレクトリには実験を時系列で累積します。新しい成果は個別の日付付きノートにし、トップレベルの [README研究ログ](../README.md) に1行追加してください。
 
+## 2026-10-10 — H9 joint Japanese-phonetic / English lattice study
+
+- [H9研究レポート](2026-10-10-h9-joint-lattice-study.md) — H7・H8と同一13分類/5分割で、全英語span完全一致・言語切替境界F1・日本語誤検出・別表記精度を比較
+- [H9再現コード](h9_joint_lattice_experiment.py) / [14件の単体テスト](h9_joint_lattice_selftest.py) / [集計JSON](h9-2026-10-10-summary.json)
+- 28,430回の合成入力モデル評価。H8に比べ、文頭/中/末・2英語島・micro F1は改善。ただしH7より文中・別表記や日本語誤候補で回帰が残る。候補生成スキャナの短英語・記号制約も未解決
+- H8 PR #7を親とする研究PR。H9は日本語ローマ字音韻を用いた**Python上の簡易ラティス**であり、C#本体・Mozc/TSF・毎打鍵レイテンシは未検証
+
 ## 2026-10-10 — H8 global multi-English span path study
 
 - [詳細レポート](2026-10-10-h8-global-multispan-study.md) — 英語位置別、2つの英語区間、別表記、日本語誤候補の正負双方の結果を保存
