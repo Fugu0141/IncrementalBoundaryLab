@@ -1,0 +1,8 @@
+<workspace>\tests\BoundaryLab.Core.LatticeTests\BoundaryLab.Core.LatticeTests.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。
+<workspace>\tests\BoundaryLab.Core.LatticeTests\BoundaryLab.Core.LatticeTests.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。
+All Evidence Lattice v0.5 tests passed.
+Basic: 今日はcommitしました
+Issue: 今日issueは
+Debug: 今日debugに
+Node: node.jsを使う
+Real: へんかんにかんしてはcommitとかのえいごいれてもんだいなさそうだね でもちょっともんだいなのがnode.jsということばがぶんかつできてないんだよね

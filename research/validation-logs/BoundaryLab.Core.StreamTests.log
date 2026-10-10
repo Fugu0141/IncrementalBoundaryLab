@@ -1,0 +1,41 @@
+<workspace>\tests\BoundaryLab.Core.StreamTests\BoundaryLab.Core.StreamTests.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。
+<workspace>\tests\BoundaryLab.Core.StreamTests\BoundaryLab.Core.StreamTests.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。
+CASE oreha: おれは
+CASE de-ta: でーた
+CASE de-taganaidesune: でーたがないですね
+CASE nihongo: 日本語
+CASE commit: commit
+CASE theory: theory
+CASE node.js: node.js
+CASE githubdeissue: githubでissue
+CASE networkmiru: networkみる
+CASE kyouhacommitsimasita: 今日はcommitしました
+USER_TRACE_REGRESSION toomoimasu => とおもいます
+USER_TRACE_REGRESSION saiyousitemoiitoomoimasu  => さいようしてもいいとおもいます␠
+USER_TRACE_REGRESSION meltype => meltype
+USER_TRACE_REGRESSION meltypega => meltypeが
+USER_TRACE_REGRESSION meltypenimo => meltypeにも
+USER_TRACE_REGRESSION konobranchwomotonimeltypenimo => このbranchをもとにmeltypeにも
+USER_TRACE_REGRESSION meltypegakitinntohannnousite => meltypeがきちんとはんのうして
+CODE_BOUNDARY konoyouninode.jsnado => このようにnode.jsなど
+CODE_BOUNDARY konnnitiha.konoyouninode.jsnado => こんにちは.このようにnode.jsなど
+CODE_BOUNDARY node.jsnado => node.jsなど
+CODE_BOUNDARY konoyouninode.js => このようにnode.js
+CODE_BOUNDARY node.jswotukau => node.jsを使う
+CODE_BOUNDARY nihongo.node.js => 日本語.node.js
+CODE_BOUNDARY node.jsonwotukau => node.jsonを使う
+MORPHOLOGY japanese => japanese
+MORPHOLOGY japaneseno => japaneseの
+MORPHOLOGY orehajapaneseno => おれはjapaneseの
+MORPHOLOGY japanesedesu => japaneseです
+MIXED たとえばtheということばは,englishをまなぶにはだいじなことです
+MIXED SEGMENTS tatoeba=>たとえば:JapanesePhonetic:6.19 / the=>the:EnglishLexical:5.35 / toiukotobaha=>ということばは:JapanesePhonetic:10.04 / ,=>,:HardBoundary:0.35 / english=>english:LiteralFallback:9.72 / womanabunihadaizinakoto=>をまなぶにはだいじなこと:JapanesePhonetic:18.51 / desu=>です:JapaneseLexical:5.85
+MIXED PATHS 32.43:english | womanabunihadaizinakoto | desu=>englishをまなぶにはだいじなことです || 32.18:english | wo | manabunihadaizinakoto | desu=>englishをまなぶにはだいじなことです || 31.32:en | glish | womanabunihadaizinakoto | desu=>えんglishをまなぶにはだいじなことです
+PERIOD 日本語.
+NODE node.jsを使う
+PERIOD_CASE oreha. -> おれは.
+PERIOD_CASE github.comde -> github.comで
+PERIOD_CASE nihongo.node.js -> 日本語.node.js
+BOUNDED input=270 frames=256 expanded=1656
+PERF legacyMs=95.0, streamMs=5.2, legacyExpanded=21054, streamExpanded=713
+Stream Hybrid v1 core tests passed.

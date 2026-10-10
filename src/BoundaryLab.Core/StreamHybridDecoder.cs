@@ -26,6 +26,11 @@ internal sealed class StreamHybridDecoder
         ["node", "github", "python", "rust", "react", "test", "index",
          "main", "app", "file", "package", "api", "www"],
         StringComparer.Ordinal);
+    // Weak shape evidence, NOT a dictionary lookup or proof of English.
+    // Rare endings can expose an otherwise wholly kana-readable word such
+    // as "japanese", especially before a Japanese particle ("...seno").
+    private static readonly string[] EnglishMorphologyEndings =
+        ["ology", "tion", "sion", "ment", "ness", "able", "ible", "ese"];
     private static readonly IReadOnlyDictionary<char, LexiconEntry[]> LexicalIndex =
         Lexicon.Entries.GroupBy(e => e.Raw[0])
             .ToDictionary(g => g.Key, g => g.ToArray());
@@ -64,14 +69,23 @@ internal sealed class StreamHybridDecoder
         // BEFORE phonetic runs so the Japanese side can stop precisely at
         // the beginning of a viable identifier such as node.js.
         AddStructuralCodes(raw, candidate);
+        AddMorphologicalLatinIslands(raw, candidate);
+        AddUnknownLatinIslands(raw, projection, candidate);
         var codeStarts = new HashSet<int>();
+        var latinStarts = new HashSet<int>();
         for (var i = 0; i < candidate.Length; i++)
         {
             if (candidate[i].Any(e => e.Kind == LatticeEdgeKind.LatinStructural))
                 codeStarts.Add(i);
+            // A proposed Latin island is useless unless preceding kana
+            // candidates can stop at exactly its starting offset.
+            if (candidate[i].Any(e => e.Language == LanguageKind.English &&
+                e.Kind is LatticeEdgeKind.EnglishLexical or
+                    LatticeEdgeKind.LatinStructural or
+                    LatticeEdgeKind.LiteralFallback))
+                latinStarts.Add(i);
         }
-        AddKanaRuns(raw, candidate, codeStarts);
-        AddUnknownLatinIslands(raw, projection, candidate);
+        AddKanaRuns(raw, candidate, latinStarts);
         AddPunctuation(raw, candidate);
         AddLongVowels(raw, candidate);
 
@@ -244,7 +258,7 @@ internal sealed class StreamHybridDecoder
     }
 
     private static void AddKanaRuns(
-        string raw, List<LatticeEdge>[] dst, IReadOnlySet<int> codeStarts)
+        string raw, List<LatticeEdge>[] dst, IReadOnlySet<int> latinStarts)
     {
         for (var start = 0; start < raw.Length; start++)
         {
@@ -273,7 +287,7 @@ internal sealed class StreamHybridDecoder
                 // and the transition to an unknown Latin island.
                 if (end == raw.Length || !char.IsAsciiLetter(raw[end]) ||
                     IsEnglishStart(raw, end) || IsJapaneseStart(raw, end) ||
-                    codeStarts.Contains(end))
+                    latinStarts.Contains(end))
                     candidates.Add((end, text));
                 if (steps >= MaxSpan) break;
             }
@@ -281,14 +295,13 @@ internal sealed class StreamHybridDecoder
                 candidates.Add((end, text));
 
             // The ordinary four candidate cuts can be pruned for speed,
-            // but an evidence-backed code onset must never disappear
-            // merely because it occurred before the last four cuts.
-            // This preserves the path
-            // konoyouni | node.js | nado rather than konoyouninode | . | js.
+            // but an evidence-backed Latin onset must never disappear.
+            // This includes known words, structural code and unknown/
+            // morphological islands; none of these forces Latin ownership.
             var chosen = candidates.TakeLast(4).ToList();
             foreach (var anchored in candidates)
             {
-                if (codeStarts.Contains(anchored.End) &&
+                if (latinStarts.Contains(anchored.End) &&
                     !chosen.Any(c => c.End == anchored.End))
                     chosen.Add(anchored);
             }
@@ -331,6 +344,52 @@ internal sealed class StreamHybridDecoder
         entries.Any(e => e.Language == LanguageKind.Japanese &&
             e.Raw.Length >= 4 && at + e.Raw.Length <= raw.Length &&
             raw.AsSpan(at, e.Raw.Length).SequenceEqual(e.Raw));
+
+
+    private static void AddMorphologicalLatinIslands(
+        string raw, List<LatticeEdge>[] dst)
+    {
+        // Romaji-readability alone is not enough: "japanese" is readable
+        // as ja|pa|ne|se. Try *reversible* English word-shape edges whose
+        // endings are relatively uncommon in Japanese keyboard romanization.
+        // Bounded lengths and a flat-ish score avoid greedily swallowing
+        // a preceding Japanese prefix (oreha|japanese, not orehajapanese).
+        for (var start = 0; start < raw.Length; start++)
+        {
+            if (!char.IsAsciiLetter(raw[start])) continue;
+            var maxEnd = start;
+            while (maxEnd < raw.Length && maxEnd - start < MaxSpan &&
+                   char.IsAsciiLetter(raw[maxEnd]))
+                maxEnd++;
+            for (var end = start + 7; end <= maxEnd; end++)
+            {
+                var span = raw.AsSpan(start, end - start);
+                string? ending = null;
+                foreach (var suffix in EnglishMorphologyEndings)
+                {
+                    if (!span.EndsWith(suffix.AsSpan(), StringComparison.Ordinal))
+                        continue;
+                    ending = suffix;
+                    break;
+                }
+                if (ending is null) continue;
+
+                // A complete Latin token must reach punctuation/input end
+                // or be followed by a plausible Japanese particle. Never
+                // treat arbitrary intermediate morphology as a word cut.
+                var particleAfter = IsJapaneseParticle(raw, end);
+                if (end < raw.Length && char.IsAsciiLetter(raw[end]) &&
+                    !particleAfter)
+                    continue;
+
+                var score = 8.4 + Math.Min(end - start - 7, 8) * 0.10 +
+                            (particleAfter ? 0.6 : 0.0);
+                dst[start].Add(Edge(raw, start, end, raw[start..end],
+                    LanguageKind.English, LatticeEdgeKind.LiteralFallback,
+                    score, "latin-morphology-" + ending + "-tentative"));
+            }
+        }
+    }
 
     private static void AddUnknownLatinIslands(
         string raw, PhoneticProjection projection, List<LatticeEdge>[] dst)

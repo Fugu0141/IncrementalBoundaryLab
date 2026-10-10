@@ -1,0 +1,1235 @@
+{
+  "branch": "experiment/stream-hybrid-v1.3-latin-morphology",
+  "algorithm": "iblab-stream-hybrid-v1.2",
+  "cases": [
+    {
+      "name": "customer",
+      "raw": "customer",
+      "expected": "customer",
+      "otherAcceptable": null,
+      "actual": "cus\u3068\u3081r",
+      "exact": false,
+      "acceptable": false,
+      "goldBoundaries": [],
+      "selectedBoundaries": [
+        3,
+        7
+      ],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 3,
+          "Raw": "cus",
+          "Output": "cus",
+          "kind": "LiteralFallback",
+          "language": "English"
+        },
+        {
+          "Start": 3,
+          "End": 7,
+          "Raw": "tome",
+          "Output": "\u3068\u3081",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        },
+        {
+          "Start": 7,
+          "End": 8,
+          "Raw": "r",
+          "Output": "r",
+          "kind": "Unknown",
+          "language": "Unknown"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 8,
+          "raw": "customer",
+          "diagnosticEdge": [],
+          "inTop4Path": false
+        }
+      ],
+      "candidateEdgeCount": 11,
+      "topPaths": [
+        {
+          "Score": 5.039999999999999,
+          "Output": "cus\u3068\u3081r",
+          "Segmentation": "cus | tome | r"
+        },
+        {
+          "Score": 4.789999999999997,
+          "Output": "cus\u3068\u3081r",
+          "Segmentation": "cus | to | me | r"
+        }
+      ],
+      "committed": 0,
+      "expanded": 20
+    },
+    {
+      "name": "monitor",
+      "raw": "monitor",
+      "expected": "monitor",
+      "otherAcceptable": null,
+      "actual": "\u3082\u306B\u3068r",
+      "exact": false,
+      "acceptable": false,
+      "goldBoundaries": [],
+      "selectedBoundaries": [
+        6
+      ],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 6,
+          "Raw": "monito",
+          "Output": "\u3082\u306B\u3068",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        },
+        {
+          "Start": 6,
+          "End": 7,
+          "Raw": "r",
+          "Output": "r",
+          "kind": "Unknown",
+          "language": "Unknown"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 7,
+          "raw": "monitor",
+          "diagnosticEdge": [],
+          "inTop4Path": false
+        }
+      ],
+      "candidateEdgeCount": 12,
+      "topPaths": [
+        {
+          "Score": 2.27,
+          "Output": "\u3082\u306B\u3068r",
+          "Segmentation": "monito | r"
+        },
+        {
+          "Score": 2.02,
+          "Output": "\u3082\u306B\u3068r",
+          "Segmentation": "mo | nito | r"
+        },
+        {
+          "Score": 1.77,
+          "Output": "\u3082\u306B\u3068r",
+          "Segmentation": "mo | ni | to | r"
+        }
+      ],
+      "committed": 0,
+      "expanded": 26
+    },
+    {
+      "name": "strategy",
+      "raw": "strategy",
+      "expected": "strategy",
+      "otherAcceptable": null,
+      "actual": "st\u3089\u3066gy",
+      "exact": false,
+      "acceptable": false,
+      "goldBoundaries": [],
+      "selectedBoundaries": [
+        2,
+        6,
+        7
+      ],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 2,
+          "Raw": "st",
+          "Output": "st",
+          "kind": "LiteralFallback",
+          "language": "English"
+        },
+        {
+          "Start": 2,
+          "End": 6,
+          "Raw": "rate",
+          "Output": "\u3089\u3066",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        },
+        {
+          "Start": 6,
+          "End": 7,
+          "Raw": "g",
+          "Output": "g",
+          "kind": "Unknown",
+          "language": "Unknown"
+        },
+        {
+          "Start": 7,
+          "End": 8,
+          "Raw": "y",
+          "Output": "y",
+          "kind": "Unknown",
+          "language": "Unknown"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 8,
+          "raw": "strategy",
+          "diagnosticEdge": [],
+          "inTop4Path": false
+        }
+      ],
+      "candidateEdgeCount": 10,
+      "topPaths": [
+        {
+          "Score": 0.9900000000000007,
+          "Output": "st\u3089\u3066gy",
+          "Segmentation": "st | rate | g | y"
+        },
+        {
+          "Score": 0.9899999999999989,
+          "Output": "st\u3089\u3066gy",
+          "Segmentation": "st | ra | te | g | y"
+        }
+      ],
+      "committed": 0,
+      "expanded": 22
+    },
+    {
+      "name": "japanese",
+      "raw": "japanese",
+      "expected": "japanese",
+      "otherAcceptable": null,
+      "actual": "\u3058\u3083\u3071\u306D\u305B",
+      "exact": false,
+      "acceptable": false,
+      "goldBoundaries": [],
+      "selectedBoundaries": [],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 8,
+          "Raw": "japanese",
+          "Output": "\u3058\u3083\u3071\u306D\u305B",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 8,
+          "raw": "japanese",
+          "diagnosticEdge": [],
+          "inTop4Path": false
+        }
+      ],
+      "candidateEdgeCount": 8,
+      "topPaths": [
+        {
+          "Score": 6.96,
+          "Output": "\u3058\u3083\u3071\u306D\u305B",
+          "Segmentation": "japanese"
+        }
+      ],
+      "committed": 0,
+      "expanded": 10
+    },
+    {
+      "name": "tokyo",
+      "raw": "tokyo",
+      "expected": "tokyo",
+      "otherAcceptable": [
+        "\u3068\u304D\u3087"
+      ],
+      "actual": "\u3068\u304D\u3087",
+      "exact": false,
+      "acceptable": true,
+      "goldBoundaries": [],
+      "selectedBoundaries": [],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 5,
+          "Raw": "tokyo",
+          "Output": "\u3068\u304D\u3087",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 5,
+          "raw": "tokyo",
+          "diagnosticEdge": [],
+          "inTop4Path": false
+        }
+      ],
+      "candidateEdgeCount": 8,
+      "topPaths": [
+        {
+          "Score": 4.65,
+          "Output": "\u3068\u304D\u3087",
+          "Segmentation": "tokyo"
+        },
+        {
+          "Score": 4.4,
+          "Output": "\u3068\u304D\u3087",
+          "Segmentation": "to | kyo"
+        }
+      ],
+      "committed": 0,
+      "expanded": 10
+    },
+    {
+      "name": "github",
+      "raw": "github",
+      "expected": "github",
+      "otherAcceptable": null,
+      "actual": "github",
+      "exact": true,
+      "acceptable": true,
+      "goldBoundaries": [],
+      "selectedBoundaries": [],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 6,
+          "Raw": "github",
+          "Output": "github",
+          "kind": "EnglishLexical",
+          "language": "English"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 6,
+          "raw": "github",
+          "diagnosticEdge": [
+            {
+              "kind": "EnglishLexical",
+              "Evidence": "english-lexeme",
+              "LocalScore": 8.05
+            }
+          ],
+          "inTop4Path": true
+        }
+      ],
+      "candidateEdgeCount": 8,
+      "topPaths": [
+        {
+          "Score": 8.05,
+          "Output": "github",
+          "Segmentation": "github"
+        },
+        {
+          "Score": 3.019999999999999,
+          "Output": "git\u3075b",
+          "Segmentation": "git | hu | b"
+        },
+        {
+          "Score": 1.9099999999999997,
+          "Output": "\u304Et\u3075b",
+          "Segmentation": "gi | t | hu | b"
+        }
+      ],
+      "committed": 0,
+      "expanded": 20
+    },
+    {
+      "name": "meltype",
+      "raw": "meltype",
+      "expected": "meltype",
+      "otherAcceptable": null,
+      "actual": "meltype",
+      "exact": true,
+      "acceptable": true,
+      "goldBoundaries": [],
+      "selectedBoundaries": [],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 7,
+          "Raw": "meltype",
+          "Output": "meltype",
+          "kind": "LiteralFallback",
+          "language": "English"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 7,
+          "raw": "meltype",
+          "diagnosticEdge": [
+            {
+              "kind": "LiteralFallback",
+              "Evidence": "unknown-latin-island-complete-terminal-kana",
+              "LocalScore": 9.94
+            }
+          ],
+          "inTop4Path": true
+        }
+      ],
+      "candidateEdgeCount": 11,
+      "topPaths": [
+        {
+          "Score": 9.94,
+          "Output": "meltype",
+          "Segmentation": "meltype"
+        },
+        {
+          "Score": 8.93,
+          "Output": "melty\u307A",
+          "Segmentation": "melty | pe"
+        },
+        {
+          "Score": 8.83,
+          "Output": "\u3081ltype",
+          "Segmentation": "me | ltype"
+        },
+        {
+          "Score": 7.819999999999999,
+          "Output": "\u3081lty\u307A",
+          "Segmentation": "me | lty | pe"
+        }
+      ],
+      "committed": 0,
+      "expanded": 21
+    },
+    {
+      "name": "ime",
+      "raw": "ime",
+      "expected": "ime",
+      "otherAcceptable": [
+        "\u3044\u3081"
+      ],
+      "actual": "\u3044\u3081",
+      "exact": false,
+      "acceptable": true,
+      "goldBoundaries": [],
+      "selectedBoundaries": [],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 3,
+          "Raw": "ime",
+          "Output": "\u3044\u3081",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 3,
+          "raw": "ime",
+          "diagnosticEdge": [],
+          "inTop4Path": false
+        }
+      ],
+      "candidateEdgeCount": 3,
+      "topPaths": [
+        {
+          "Score": 3.1100000000000003,
+          "Output": "\u3044\u3081",
+          "Segmentation": "ime"
+        }
+      ],
+      "committed": 0,
+      "expanded": 4
+    },
+    {
+      "name": "japaneseno",
+      "raw": "japaneseno",
+      "expected": "japanese\u306E",
+      "otherAcceptable": null,
+      "actual": "\u3058\u3083\u3071\u306D\u305B\u306E",
+      "exact": false,
+      "acceptable": false,
+      "goldBoundaries": [
+        8
+      ],
+      "selectedBoundaries": [],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 10,
+          "Raw": "japaneseno",
+          "Output": "\u3058\u3083\u3071\u306D\u305B\u306E",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 8,
+          "raw": "japanese",
+          "diagnosticEdge": [],
+          "inTop4Path": false
+        }
+      ],
+      "candidateEdgeCount": 11,
+      "topPaths": [
+        {
+          "Score": 8.5,
+          "Output": "\u3058\u3083\u3071\u306D\u305B\u306E",
+          "Segmentation": "japaneseno"
+        }
+      ],
+      "committed": 0,
+      "expanded": 12
+    },
+    {
+      "name": "orehajapaneseno",
+      "raw": "orehajapaneseno",
+      "expected": "\u304A\u308C\u306Fjapanese\u306E",
+      "otherAcceptable": null,
+      "actual": "\u304A\u308C\u306F\u3058\u3083\u3071\u306D\u305B\u306E",
+      "exact": false,
+      "acceptable": false,
+      "goldBoundaries": [
+        5,
+        13
+      ],
+      "selectedBoundaries": [],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 15,
+          "Raw": "orehajapaneseno",
+          "Output": "\u304A\u308C\u306F\u3058\u3083\u3071\u306D\u305B\u306E",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        }
+      ],
+      "latin": [
+        {
+          "start": 5,
+          "end": 13,
+          "raw": "japanese",
+          "diagnosticEdge": [],
+          "inTop4Path": false
+        }
+      ],
+      "candidateEdgeCount": 19,
+      "topPaths": [
+        {
+          "Score": 12.350000000000001,
+          "Output": "\u304A\u308C\u306F\u3058\u3083\u3071\u306D\u305B\u306E",
+          "Segmentation": "orehajapaneseno"
+        },
+        {
+          "Score": 11.910000000000002,
+          "Output": "or\u3048\u306F\u3058\u3083\u3071\u306D\u305B\u306E",
+          "Segmentation": "or | ehajapaneseno"
+        },
+        {
+          "Score": 9.250000000000002,
+          "Output": "\u3092\u308C\u306F\u3058\u3083\u3071\u306D\u305B\u306E",
+          "Segmentation": "o | rehajapaneseno"
+        }
+      ],
+      "committed": 0,
+      "expanded": 84
+    },
+    {
+      "name": "meltypega",
+      "raw": "meltypega",
+      "expected": "meltype\u304C",
+      "otherAcceptable": null,
+      "actual": "meltype\u304C",
+      "exact": true,
+      "acceptable": true,
+      "goldBoundaries": [
+        7
+      ],
+      "selectedBoundaries": [
+        7
+      ],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 7,
+          "Raw": "meltype",
+          "Output": "meltype",
+          "kind": "LiteralFallback",
+          "language": "English"
+        },
+        {
+          "Start": 7,
+          "End": 9,
+          "Raw": "ga",
+          "Output": "\u304C",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 7,
+          "raw": "meltype",
+          "diagnosticEdge": [
+            {
+              "kind": "LiteralFallback",
+              "Evidence": "unknown-latin-island-complete-terminal-kana",
+              "LocalScore": 10.84
+            }
+          ],
+          "inTop4Path": true
+        }
+      ],
+      "candidateEdgeCount": 13,
+      "topPaths": [
+        {
+          "Score": 12.33,
+          "Output": "meltype\u304C",
+          "Segmentation": "meltype | ga"
+        },
+        {
+          "Score": 11.219999999999999,
+          "Output": "\u3081ltype\u304C",
+          "Segmentation": "me | ltype | ga"
+        },
+        {
+          "Score": 10.47,
+          "Output": "melty\u307A\u304C",
+          "Segmentation": "melty | pega"
+        },
+        {
+          "Score": 9.360000000000001,
+          "Output": "\u3081lty\u307A\u304C",
+          "Segmentation": "me | lty | pega"
+        }
+      ],
+      "committed": 0,
+      "expanded": 37
+    },
+    {
+      "name": "toomoimasu",
+      "raw": "toomoimasu",
+      "expected": "\u3068\u304A\u3082\u3044\u307E\u3059",
+      "otherAcceptable": null,
+      "actual": "\u3068\u304A\u3082\u3044\u307E\u3059",
+      "exact": true,
+      "acceptable": true,
+      "goldBoundaries": [],
+      "selectedBoundaries": [],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 10,
+          "Raw": "toomoimasu",
+          "Output": "\u3068\u304A\u3082\u3044\u307E\u3059",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        }
+      ],
+      "latin": [],
+      "candidateEdgeCount": 16,
+      "topPaths": [
+        {
+          "Score": 8.5,
+          "Output": "\u3068\u304A\u3082\u3044\u307E\u3059",
+          "Segmentation": "toomoimasu"
+        },
+        {
+          "Score": 8.25,
+          "Output": "\u3068\u304A\u3082\u3044\u307E\u3059",
+          "Segmentation": "to | omoimasu"
+        },
+        {
+          "Score": 6.789999999999999,
+          "Output": "\u3068\u3092\u3082\u4ECA\u3059",
+          "Segmentation": "to | o | mo | ima | su"
+        },
+        {
+          "Score": 5.15,
+          "Output": "\u3068\u3092\u3082\u3044\u307E\u3059",
+          "Segmentation": "to | o | moimasu"
+        }
+      ],
+      "committed": 0,
+      "expanded": 66
+    },
+    {
+      "name": "githubdeissue",
+      "raw": "githubdeissue",
+      "expected": "github\u3067issue",
+      "otherAcceptable": null,
+      "actual": "github\u3067issue",
+      "exact": true,
+      "acceptable": true,
+      "goldBoundaries": [
+        6,
+        8
+      ],
+      "selectedBoundaries": [
+        3,
+        6,
+        8
+      ],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 3,
+          "Raw": "git",
+          "Output": "git",
+          "kind": "LiteralFallback",
+          "language": "English"
+        },
+        {
+          "Start": 3,
+          "End": 6,
+          "Raw": "hub",
+          "Output": "hub",
+          "kind": "LiteralFallback",
+          "language": "English"
+        },
+        {
+          "Start": 6,
+          "End": 8,
+          "Raw": "de",
+          "Output": "\u3067",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        },
+        {
+          "Start": 8,
+          "End": 13,
+          "Raw": "issue",
+          "Output": "issue",
+          "kind": "EnglishLexical",
+          "language": "English"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 6,
+          "raw": "github",
+          "diagnosticEdge": [
+            {
+              "kind": "EnglishLexical",
+              "Evidence": "english-lexeme",
+              "LocalScore": 8.05
+            }
+          ],
+          "inTop4Path": true
+        },
+        {
+          "start": 8,
+          "end": 13,
+          "raw": "issue",
+          "diagnosticEdge": [
+            {
+              "kind": "EnglishLexical",
+              "Evidence": "english-lexeme",
+              "LocalScore": 7.15
+            }
+          ],
+          "inTop4Path": true
+        }
+      ],
+      "candidateEdgeCount": 19,
+      "topPaths": [
+        {
+          "Score": 16.05,
+          "Output": "github\u3067issue",
+          "Segmentation": "git | hub | de | issue"
+        },
+        {
+          "Score": 15.540000000000001,
+          "Output": "github\u3067issue",
+          "Segmentation": "github | de | issue"
+        },
+        {
+          "Score": 14.94,
+          "Output": "\u304Ethub\u3067issue",
+          "Segmentation": "gi | t | hub | de | issue"
+        },
+        {
+          "Score": 14.889999999999999,
+          "Output": "git\u3075b\u3067issue",
+          "Segmentation": "git | hu | b | de | issue"
+        }
+      ],
+      "committed": 0,
+      "expanded": 188
+    },
+    {
+      "name": "networkmiru",
+      "raw": "networkmiru",
+      "expected": "network\u307F\u308B",
+      "otherAcceptable": null,
+      "actual": "network\u307F\u308B",
+      "exact": true,
+      "acceptable": true,
+      "goldBoundaries": [
+        7
+      ],
+      "selectedBoundaries": [
+        3,
+        7
+      ],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 3,
+          "Raw": "net",
+          "Output": "net",
+          "kind": "LiteralFallback",
+          "language": "English"
+        },
+        {
+          "Start": 3,
+          "End": 7,
+          "Raw": "work",
+          "Output": "work",
+          "kind": "LiteralFallback",
+          "language": "English"
+        },
+        {
+          "Start": 7,
+          "End": 11,
+          "Raw": "miru",
+          "Output": "\u307F\u308B",
+          "kind": "JapaneseLexical",
+          "language": "Japanese"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 7,
+          "raw": "network",
+          "diagnosticEdge": [
+            {
+              "kind": "EnglishLexical",
+              "Evidence": "english-lexeme",
+              "LocalScore": 8.95
+            }
+          ],
+          "inTop4Path": true
+        }
+      ],
+      "candidateEdgeCount": 16,
+      "topPaths": [
+        {
+          "Score": 14.939999999999998,
+          "Output": "network\u307F\u308B",
+          "Segmentation": "net | work | miru"
+        },
+        {
+          "Score": 13.95,
+          "Output": "network\u307F\u308B",
+          "Segmentation": "network | miru"
+        },
+        {
+          "Score": 13.829999999999998,
+          "Output": "\u306Dtwork\u307F\u308B",
+          "Segmentation": "ne | t | work | miru"
+        },
+        {
+          "Score": 13.78,
+          "Output": "net\u3092rk\u307F\u308B",
+          "Segmentation": "net | wo | rk | miru"
+        }
+      ],
+      "committed": 0,
+      "expanded": 94
+    },
+    {
+      "name": "myunknownsite.comniarimasu",
+      "raw": "myunknownsite.comniarimasu",
+      "expected": "myunknownsite.com\u306B\u3042\u308A\u307E\u3059",
+      "otherAcceptable": null,
+      "actual": "\u307F\u3085\u3093knownsite.com\u306B\u3042\u308A\u307E\u3059",
+      "exact": false,
+      "acceptable": false,
+      "goldBoundaries": [
+        17
+      ],
+      "selectedBoundaries": [
+        4,
+        5,
+        17
+      ],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 4,
+          "Raw": "myun",
+          "Output": "\u307F\u3085\u3093",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        },
+        {
+          "Start": 4,
+          "End": 5,
+          "Raw": "k",
+          "Output": "k",
+          "kind": "LiteralFallback",
+          "language": "English"
+        },
+        {
+          "Start": 5,
+          "End": 17,
+          "Raw": "nownsite.com",
+          "Output": "nownsite.com",
+          "kind": "LatinStructural",
+          "language": "English"
+        },
+        {
+          "Start": 17,
+          "End": 26,
+          "Raw": "niarimasu",
+          "Output": "\u306B\u3042\u308A\u307E\u3059",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 17,
+          "raw": "myunknownsite.com",
+          "diagnosticEdge": [],
+          "inTop4Path": false
+        }
+      ],
+      "candidateEdgeCount": 37,
+      "topPaths": [
+        {
+          "Score": 26.790000000000006,
+          "Output": "\u307F\u3085\u3093knownsite.com\u306B\u3042\u308A\u307E\u3059",
+          "Segmentation": "myun | k | nownsite.com | niarimasu"
+        },
+        {
+          "Score": 26.54000000000001,
+          "Output": "\u307F\u3085\u3093knownsite.com\u306B\u3042\u308A\u307E\u3059",
+          "Segmentation": "myun | k | nownsite.com | ni | arimasu"
+        },
+        {
+          "Score": 25.830000000000002,
+          "Output": "\u307F\u3085\u3093k\u306Ewnsite.com\u306B\u3042\u308A\u307E\u3059",
+          "Segmentation": "myun | k | no | wnsite.com | niarimasu"
+        },
+        {
+          "Score": 25.580000000000005,
+          "Output": "\u307F\u3085\u3093k\u306Ewnsite.com\u306B\u3042\u308A\u307E\u3059",
+          "Segmentation": "myun | k | no | wnsite.com | ni | arimasu"
+        }
+      ],
+      "committed": 0,
+      "expanded": 483
+    },
+    {
+      "name": "CUSTOMER",
+      "raw": "CUSTOMER",
+      "expected": "CUSTOMER",
+      "otherAcceptable": null,
+      "actual": "cus\u3068\u3081r",
+      "exact": false,
+      "acceptable": false,
+      "goldBoundaries": [],
+      "selectedBoundaries": [
+        3,
+        7
+      ],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 3,
+          "Raw": "cus",
+          "Output": "cus",
+          "kind": "LiteralFallback",
+          "language": "English"
+        },
+        {
+          "Start": 3,
+          "End": 7,
+          "Raw": "tome",
+          "Output": "\u3068\u3081",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        },
+        {
+          "Start": 7,
+          "End": 8,
+          "Raw": "r",
+          "Output": "r",
+          "kind": "Unknown",
+          "language": "Unknown"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 8,
+          "raw": "CUSTOMER",
+          "diagnosticEdge": [],
+          "inTop4Path": false
+        }
+      ],
+      "candidateEdgeCount": 11,
+      "topPaths": [
+        {
+          "Score": 5.039999999999999,
+          "Output": "cus\u3068\u3081r",
+          "Segmentation": "cus | tome | r"
+        },
+        {
+          "Score": 4.789999999999997,
+          "Output": "cus\u3068\u3081r",
+          "Segmentation": "cus | to | me | r"
+        }
+      ],
+      "committed": 0,
+      "expanded": 20
+    },
+    {
+      "name": "IME",
+      "raw": "IME",
+      "expected": "IME",
+      "otherAcceptable": null,
+      "actual": "\u3044\u3081",
+      "exact": false,
+      "acceptable": false,
+      "goldBoundaries": [],
+      "selectedBoundaries": [],
+      "selected": [
+        {
+          "Start": 0,
+          "End": 3,
+          "Raw": "ime",
+          "Output": "\u3044\u3081",
+          "kind": "JapanesePhonetic",
+          "language": "Japanese"
+        }
+      ],
+      "latin": [
+        {
+          "start": 0,
+          "end": 3,
+          "raw": "IME",
+          "diagnosticEdge": [],
+          "inTop4Path": false
+        }
+      ],
+      "candidateEdgeCount": 3,
+      "topPaths": [
+        {
+          "Score": 3.1100000000000003,
+          "Output": "\u3044\u3081",
+          "Segmentation": "ime"
+        }
+      ],
+      "committed": 0,
+      "expanded": 4
+    }
+  ],
+  "editResults": [
+    {
+      "input": "japan",
+      "Output": "\u3058\u3083\u3071\u3093",
+      "CommittedRawLength": 0,
+      "rebuilt": false
+    },
+    {
+      "input": "japanese",
+      "Output": "\u3058\u3083\u3071\u306D\u305B",
+      "CommittedRawLength": 0,
+      "rebuilt": false
+    },
+    {
+      "input": "japaneseno",
+      "Output": "\u3058\u3083\u3071\u306D\u305B\u306E",
+      "CommittedRawLength": 0,
+      "rebuilt": false
+    },
+    {
+      "input": "japanesen",
+      "Output": "\u3058\u3083\u3071\u306D\u305B\u3093",
+      "CommittedRawLength": 0,
+      "rebuilt": true
+    },
+    {
+      "input": "japaneseno",
+      "Output": "\u3058\u3083\u3071\u306D\u305B\u306E",
+      "CommittedRawLength": 0,
+      "rebuilt": false
+    },
+    {
+      "input": "japaneseno,",
+      "Output": "\u3058\u3083\u3071\u306D\u305B\u306E,",
+      "CommittedRawLength": 11,
+      "rebuilt": false
+    }
+  ],
+  "prefixes": {
+    "japaneseno": [
+      {
+        "prefix": "j",
+        "Output": "j",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "ja",
+        "Output": "\u3058\u3083",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "jap",
+        "Output": "\u3058\u3083p",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "japa",
+        "Output": "\u3058\u3083\u3071",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "japan",
+        "Output": "\u3058\u3083\u3071\u3093",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "japane",
+        "Output": "\u3058\u3083\u3071\u306D",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "japanes",
+        "Output": "\u3058\u3083\u3071\u306Ds",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "japanese",
+        "Output": "\u3058\u3083\u3071\u306D\u305B",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "japanesen",
+        "Output": "\u3058\u3083\u3071\u306D\u305B\u3093",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "japaneseno",
+        "Output": "\u3058\u3083\u3071\u306D\u305B\u306E",
+        "CommittedRawLength": 0
+      }
+    ],
+    "customer": [
+      {
+        "prefix": "c",
+        "Output": "c",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "cu",
+        "Output": "c\u3046",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "cus",
+        "Output": "cus",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "cust",
+        "Output": "cust",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "custo",
+        "Output": "cus\u3068",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "custom",
+        "Output": "cus\u3068m",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "custome",
+        "Output": "cus\u3068\u3081",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "customer",
+        "Output": "cus\u3068\u3081r",
+        "CommittedRawLength": 0
+      }
+    ],
+    "ime": [
+      {
+        "prefix": "i",
+        "Output": "\u3044",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "im",
+        "Output": "\u3044m",
+        "CommittedRawLength": 0
+      },
+      {
+        "prefix": "ime",
+        "Output": "\u3044\u3081",
+        "CommittedRawLength": 0
+      }
+    ]
+  },
+  "scaling": [
+    {
+      "length": 40,
+      "ms": [
+        8.3635,
+        9.6519,
+        10.5642
+      ],
+      "allocatedBytes": [
+        6670160,
+        6670160,
+        6670216
+      ],
+      "expanded": 56
+    },
+    {
+      "length": 80,
+      "ms": [
+        46.0059,
+        67.8215,
+        94.5345
+      ],
+      "allocatedBytes": [
+        34308592,
+        34308592,
+        34308648
+      ],
+      "expanded": 176
+    },
+    {
+      "length": 160,
+      "ms": [
+        97.5156,
+        128.8375,
+        171.9435
+      ],
+      "allocatedBytes": [
+        155888744,
+        155889688,
+        155889744
+      ],
+      "expanded": 616
+    }
+  ]
+}

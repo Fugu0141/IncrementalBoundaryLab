@@ -1,0 +1,204 @@
+{
+  "suffix_morphology": {
+    "positive": 54,
+    "positive_detected": 5,
+    "recall": 0.0926,
+    "negative": 34,
+    "negative_detected": 0,
+    "false_positive_rate": 0.0
+  },
+  "character_model": {
+    "positive": 54,
+    "positive_detected": 52,
+    "recall": 0.963,
+    "negative": 34,
+    "negative_detected": 0,
+    "false_positive_rate": 0.0
+  },
+  "hybrid_candidate_union": {
+    "positive": 54,
+    "positive_detected": 52,
+    "recall": 0.963,
+    "negative": 34,
+    "negative_detected": 0,
+    "false_positive_rate": 0.0
+  },
+  "japanese_only_glued_controls": {
+    "n": 100,
+    "morphology_false_candidates": 0,
+    "model_false_candidates": 0,
+    "hybrid_false_candidates": 0,
+    "examples": []
+  },
+  "mixed_stream_candidate_recall_and_spurious_spans": {
+    "morphology": {
+      "positive_cases": 54,
+      "positive_gold_span_recovered": 5,
+      "total_proposed_spans_positive_cases": 53,
+      "negative_cases": 34,
+      "negative_cases_with_any_false_english_span": 0,
+      "total_false_spans_negative_cases": 0
+    },
+    "character_model": {
+      "positive_cases": 54,
+      "positive_gold_span_recovered": 47,
+      "total_proposed_spans_positive_cases": 606,
+      "negative_cases": 34,
+      "negative_cases_with_any_false_english_span": 4,
+      "total_false_spans_negative_cases": 9
+    },
+    "hybrid": {
+      "positive_cases": 54,
+      "positive_gold_span_recovered": 47,
+      "total_proposed_spans_positive_cases": 609,
+      "negative_cases": 34,
+      "negative_cases_with_any_false_english_span": 4,
+      "total_false_spans_negative_cases": 9
+    }
+  },
+  "japanese_test_count": 15,
+  "japanese_phonetic_holdout_count": 19,
+  "english_dev_count": 450,
+  "japanese_dev_count": 15,
+  "english_train_count": 116732,
+  "japanese_train_count": 55,
+  "threshold": 0.47539,
+  "split_seed": 20261011,
+  "paradox_probes": {
+    "japanese": {
+      "english_minus_japanese": 0.715,
+      "morphology": true,
+      "model_candidate": true
+    },
+    "tokyo": {
+      "english_minus_japanese": -0.928,
+      "morphology": false,
+      "model_candidate": false
+    },
+    "ime": {
+      "english_minus_japanese": -0.254,
+      "morphology": false,
+      "model_candidate": false
+    },
+    "node": {
+      "english_minus_japanese": -0.262,
+      "morphology": false,
+      "model_candidate": false
+    },
+    "monitor": {
+      "english_minus_japanese": 1.111,
+      "morphology": false,
+      "model_candidate": true
+    },
+    "customer": {
+      "english_minus_japanese": 1.282,
+      "morphology": false,
+      "model_candidate": true
+    },
+    "strategy": {
+      "english_minus_japanese": 1.242,
+      "morphology": false,
+      "model_candidate": true
+    }
+  },
+  "english_missed_by_model": [
+    "hospital",
+    "awesome"
+  ],
+  "japanese_false_positives_model": [],
+  "english_detected_model_only": [
+    "knowledge",
+    "strategy",
+    "performance",
+    "schedule",
+    "feedback",
+    "actually",
+    "probably",
+    "basically",
+    "weekend",
+    "meeting",
+    "project",
+    "deadline",
+    "release",
+    "update",
+    "review",
+    "customer",
+    "feature",
+    "database",
+    "security",
+    "backup",
+    "laptop",
+    "keyboard",
+    "monitor",
+    "printer",
+    "wireless",
+    "calendar",
+    "holiday",
+    "airport",
+    "restaurant",
+    "library",
+    "teacher",
+    "weather",
+    "morning",
+    "evening",
+    "already",
+    "quickly",
+    "slowly",
+    "carefully",
+    "suddenly",
+    "yesterday",
+    "together",
+    "important",
+    "difficult",
+    "necessary",
+    "beautiful",
+    "wonderful",
+    "amazing"
+  ],
+  "english_detected_suffix_only": [],
+  "paired_candidate_comparison": {
+    "model_only": 47,
+    "morphology_only": 0,
+    "exact_mcnemar_p_two_sided": 1.4210854715202004e-14
+  },
+  "oov_particle_collisions": {
+    "count": 10,
+    "fraction": 0.1852,
+    "examples": {
+      "knowledge": [
+        "no"
+      ],
+      "deadline": [
+        "de"
+      ],
+      "customer": [
+        "to"
+      ],
+      "laptop": [
+        "to"
+      ],
+      "monitor": [
+        "ni",
+        "to",
+        "mo"
+      ],
+      "morning": [
+        "ni",
+        "mo"
+      ],
+      "evening": [
+        "ni"
+      ],
+      "suddenly": [
+        "de"
+      ],
+      "together": [
+        "to"
+      ],
+      "wonderful": [
+        "wo",
+        "de"
+      ]
+    }
+  }
+}

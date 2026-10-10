@@ -1,0 +1,7 @@
+<workspace>\tests\BoundaryLab.Core.MozcTests\BoundaryLab.Core.MozcTests.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。
+<workspace>\tests\BoundaryLab.Core.MozcTests\BoundaryLab.Core.MozcTests.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。
+All Mozc Responsibility IME v0.6 tests passed.
+Open: commい
+de-ta: データ
+node.js: node.js
+mixed: commitしたデータをgithubにpushしてください

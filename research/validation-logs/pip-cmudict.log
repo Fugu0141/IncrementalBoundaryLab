@@ -1,0 +1,15 @@
+Collecting cmudict==1.1.1
+  Using cached cmudict-1.1.1-py3-none-any.whl.metadata (3.6 kB)
+Collecting importlib-metadata>=5 (from cmudict==1.1.1)
+  Using cached importlib_metadata-9.0.1-py3-none-any.whl.metadata (4.5 kB)
+Collecting importlib-resources>=5 (from cmudict==1.1.1)
+  Using cached importlib_resources-7.1.0-py3-none-any.whl.metadata (4.0 kB)
+Collecting zipp>=3.20 (from importlib-metadata>=5->cmudict==1.1.1)
+  Using cached zipp-4.1.1-py3-none-any.whl.metadata (3.6 kB)
+Using cached cmudict-1.1.1-py3-none-any.whl (939 kB)
+Using cached importlib_metadata-9.0.1-py3-none-any.whl (27 kB)
+Using cached importlib_resources-7.1.0-py3-none-any.whl (37 kB)
+Using cached zipp-4.1.1-py3-none-any.whl (10 kB)
+Installing collected packages: zipp, importlib-resources, importlib-metadata, cmudict
+
+Successfully installed cmudict-1.1.1 importlib-metadata-9.0.1 importlib-resources-7.1.0 zipp-4.1.1

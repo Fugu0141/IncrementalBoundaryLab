@@ -1,0 +1,209 @@
+{
+  "suffix_morphology": {
+    "positive": 54,
+    "positive_detected": 5,
+    "recall": 0.0926,
+    "negative": 34,
+    "negative_detected": 0,
+    "false_positive_rate": 0.0
+  },
+  "character_model": {
+    "positive": 54,
+    "positive_detected": 39,
+    "recall": 0.7222,
+    "negative": 34,
+    "negative_detected": 1,
+    "false_positive_rate": 0.0294
+  },
+  "hybrid_candidate_union": {
+    "positive": 54,
+    "positive_detected": 40,
+    "recall": 0.7407,
+    "negative": 34,
+    "negative_detected": 1,
+    "false_positive_rate": 0.0294
+  },
+  "japanese_only_glued_controls": {
+    "n": 100,
+    "morphology_false_candidates": 0,
+    "model_false_candidates": 0,
+    "hybrid_false_candidates": 0,
+    "examples": []
+  },
+  "mixed_stream_candidate_recall_and_spurious_spans": {
+    "morphology": {
+      "positive_cases": 54,
+      "positive_gold_span_recovered": 5,
+      "total_proposed_spans_positive_cases": 53,
+      "negative_cases": 34,
+      "negative_cases_with_any_false_english_span": 0,
+      "total_false_spans_negative_cases": 0
+    },
+    "character_model": {
+      "positive_cases": 54,
+      "positive_gold_span_recovered": 37,
+      "total_proposed_spans_positive_cases": 280,
+      "negative_cases": 34,
+      "negative_cases_with_any_false_english_span": 1,
+      "total_false_spans_negative_cases": 3
+    },
+    "hybrid": {
+      "positive_cases": 54,
+      "positive_gold_span_recovered": 38,
+      "total_proposed_spans_positive_cases": 312,
+      "negative_cases": 34,
+      "negative_cases_with_any_false_english_span": 1,
+      "total_false_spans_negative_cases": 3
+    }
+  },
+  "japanese_test_count": 15,
+  "japanese_phonetic_holdout_count": 19,
+  "english_dev_count": 450,
+  "japanese_dev_count": 15,
+  "english_train_count": 116732,
+  "japanese_train_count": 55,
+  "threshold": 0.77546,
+  "split_seed": 20261014,
+  "paradox_probes": {
+    "japanese": {
+      "english_minus_japanese": 0.866,
+      "morphology": true,
+      "model_candidate": true
+    },
+    "tokyo": {
+      "english_minus_japanese": -1.059,
+      "morphology": false,
+      "model_candidate": false
+    },
+    "ime": {
+      "english_minus_japanese": -0.268,
+      "morphology": false,
+      "model_candidate": false
+    },
+    "node": {
+      "english_minus_japanese": 0.08,
+      "morphology": false,
+      "model_candidate": false
+    },
+    "monitor": {
+      "english_minus_japanese": 1.184,
+      "morphology": false,
+      "model_candidate": true
+    },
+    "customer": {
+      "english_minus_japanese": 1.133,
+      "morphology": false,
+      "model_candidate": true
+    },
+    "strategy": {
+      "english_minus_japanese": 1.082,
+      "morphology": false,
+      "model_candidate": true
+    }
+  },
+  "english_missed_by_model": [
+    "update",
+    "database",
+    "security",
+    "backup",
+    "laptop",
+    "holiday",
+    "hospital",
+    "already",
+    "suddenly",
+    "yesterday",
+    "together",
+    "available",
+    "beautiful",
+    "wonderful",
+    "awesome"
+  ],
+  "japanese_false_positives_model": [
+    "made"
+  ],
+  "english_detected_model_only": [
+    "knowledge",
+    "strategy",
+    "performance",
+    "schedule",
+    "feedback",
+    "actually",
+    "probably",
+    "basically",
+    "weekend",
+    "meeting",
+    "project",
+    "deadline",
+    "release",
+    "review",
+    "customer",
+    "feature",
+    "keyboard",
+    "monitor",
+    "printer",
+    "wireless",
+    "calendar",
+    "airport",
+    "restaurant",
+    "library",
+    "teacher",
+    "weather",
+    "morning",
+    "evening",
+    "quickly",
+    "slowly",
+    "carefully",
+    "important",
+    "difficult",
+    "necessary",
+    "amazing"
+  ],
+  "english_detected_suffix_only": [
+    "available"
+  ],
+  "paired_candidate_comparison": {
+    "model_only": 35,
+    "morphology_only": 1,
+    "exact_mcnemar_p_two_sided": 1.076841726899147e-09
+  },
+  "oov_particle_collisions": {
+    "count": 10,
+    "fraction": 0.1852,
+    "examples": {
+      "knowledge": [
+        "no"
+      ],
+      "deadline": [
+        "de"
+      ],
+      "customer": [
+        "to"
+      ],
+      "laptop": [
+        "to"
+      ],
+      "monitor": [
+        "ni",
+        "to",
+        "mo"
+      ],
+      "morning": [
+        "ni",
+        "mo"
+      ],
+      "evening": [
+        "ni"
+      ],
+      "suddenly": [
+        "de"
+      ],
+      "together": [
+        "to"
+      ],
+      "wonderful": [
+        "wo",
+        "de"
+      ]
+    }
+  }
+}

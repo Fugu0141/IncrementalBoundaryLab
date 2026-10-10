@@ -1,0 +1,9 @@
+japanese_lexicon 85 oov_snapshot 54 phonetic_holdout 19
+oov_in_english_lexicon []
+oov_in_japanese_lexicon []
+phon_in_japanese_lexicon []
+20261010 English train/dev 116732 450 English eval/training overlap 0 English eval/dev overlap 0 Japanese train/test overlap 0 Japanese dev/test overlap 0 Japanese train/English OOV overlap 0
+20261011 English train/dev 116732 450 English eval/training overlap 0 English eval/dev overlap 0 Japanese train/test overlap 0 Japanese dev/test overlap 0 Japanese train/English OOV overlap 0
+20261012 English train/dev 116732 450 English eval/training overlap 0 English eval/dev overlap 0 Japanese train/test overlap 0 Japanese dev/test overlap 0 Japanese train/English OOV overlap 0
+20261013 English train/dev 116732 450 English eval/training overlap 0 English eval/dev overlap 0 Japanese train/test overlap 0 Japanese dev/test overlap 0 Japanese train/English OOV overlap 0
+20261014 English train/dev 116732 450 English eval/training overlap 0 English eval/dev overlap 0 Japanese train/test overlap 0 Japanese dev/test overlap 0 Japanese train/English OOV overlap 0
