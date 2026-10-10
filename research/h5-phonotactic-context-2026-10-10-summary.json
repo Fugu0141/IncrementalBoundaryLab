@@ -1,0 +1,184 @@
+{
+  "schema": "ibl-h5-summary-v1",
+  "study": "H5: phonotactics and boundary evidence with dev-calibrated false candidate budget",
+  "date": "2026-10-10",
+  "source_script": "research/h5_phonotactic_context_experiment.py",
+  "environment": "Python 3.13, cmudict 1.1.3, no dotnet",
+  "experiment_scope": "Offline candidate generation; neither C# StreamHybrid decoder accuracy nor Windows IME conversion accuracy",
+  "dataset": {
+    "english_oov_types": 54,
+    "english_development_types": 180,
+    "english_training_count": 116732,
+    "japanese_development_types": 15,
+    "japanese_test_types": 34,
+    "japanese_development_streams": 165,
+    "japanese_test_streams": 229,
+    "context_shift_positive_streams": 54,
+    "context_shift_negative_streams": 229
+  },
+  "setup": {
+    "development_empirical_false_case_budget": 0.05,
+    "max_candidates_per_input": 4,
+    "phonotactic_weight": 1,
+    "boundary_weight": 0.8,
+    "candidate_recipes": [
+      "char_only",
+      "char_phonotactic",
+      "char_boundary",
+      "char_phonotactic_boundary"
+    ],
+    "recipe_selection": "development only",
+    "holdout_group": "Japanese word types",
+    "shift_contexts": "never used for threshold selection"
+  },
+  "records": [
+    {
+      "seed": 20261010,
+      "baseline_h4": {
+        "english_gold": 37,
+        "japanese_false_cases": 2,
+        "positive_candidate_spans": 163
+      },
+      "phonotactic_ablation": {
+        "english_gold": 43,
+        "japanese_false_cases": 1
+      },
+      "boundary_ablation": {
+        "english_gold": 39,
+        "japanese_false_cases": 0
+      },
+      "h5": {
+        "english_gold": 45,
+        "japanese_false_cases": 0,
+        "positive_candidate_spans": 179,
+        "recipe_selected": "char_phonotactic_boundary"
+      },
+      "shifted_context": {
+        "baseline_char_gold": 36,
+        "baseline_char_false_cases": 4,
+        "h5_gold": 46,
+        "h5_false_cases": 2
+      }
+    },
+    {
+      "seed": 20261011,
+      "baseline_h4": {
+        "english_gold": 36,
+        "japanese_false_cases": 0,
+        "positive_candidate_spans": 139
+      },
+      "phonotactic_ablation": {
+        "english_gold": 42,
+        "japanese_false_cases": 0
+      },
+      "boundary_ablation": {
+        "english_gold": 38,
+        "japanese_false_cases": 0
+      },
+      "h5": {
+        "english_gold": 43,
+        "japanese_false_cases": 0,
+        "positive_candidate_spans": 175,
+        "recipe_selected": "char_phonotactic_boundary"
+      },
+      "shifted_context": {
+        "baseline_char_gold": 38,
+        "baseline_char_false_cases": 0,
+        "h5_gold": 44,
+        "h5_false_cases": 0
+      }
+    },
+    {
+      "seed": 20261012,
+      "baseline_h4": {
+        "english_gold": 38,
+        "japanese_false_cases": 13,
+        "positive_candidate_spans": 172
+      },
+      "phonotactic_ablation": {
+        "english_gold": 41,
+        "japanese_false_cases": 5
+      },
+      "boundary_ablation": {
+        "english_gold": 39,
+        "japanese_false_cases": 10
+      },
+      "h5": {
+        "english_gold": 43,
+        "japanese_false_cases": 7,
+        "positive_candidate_spans": 177,
+        "recipe_selected": "char_phonotactic_boundary"
+      },
+      "shifted_context": {
+        "baseline_char_gold": 40,
+        "baseline_char_false_cases": 8,
+        "h5_gold": 44,
+        "h5_false_cases": 3
+      }
+    },
+    {
+      "seed": 20261013,
+      "baseline_h4": {
+        "english_gold": 40,
+        "japanese_false_cases": 5,
+        "positive_candidate_spans": 173
+      },
+      "phonotactic_ablation": {
+        "english_gold": 45,
+        "japanese_false_cases": 9
+      },
+      "boundary_ablation": {
+        "english_gold": 42,
+        "japanese_false_cases": 6
+      },
+      "h5": {
+        "english_gold": 46,
+        "japanese_false_cases": 12,
+        "positive_candidate_spans": 198,
+        "recipe_selected": "char_phonotactic_boundary"
+      },
+      "shifted_context": {
+        "baseline_char_gold": 41,
+        "baseline_char_false_cases": 8,
+        "h5_gold": 47,
+        "h5_false_cases": 11
+      }
+    },
+    {
+      "seed": 20261014,
+      "baseline_h4": {
+        "english_gold": 35,
+        "japanese_false_cases": 8,
+        "positive_candidate_spans": 147
+      },
+      "phonotactic_ablation": {
+        "english_gold": 40,
+        "japanese_false_cases": 8
+      },
+      "boundary_ablation": {
+        "english_gold": 36,
+        "japanese_false_cases": 8
+      },
+      "h5": {
+        "english_gold": 41,
+        "japanese_false_cases": 10,
+        "positive_candidate_spans": 168,
+        "recipe_selected": "char_phonotactic_boundary"
+      },
+      "shifted_context": {
+        "baseline_char_gold": 36,
+        "baseline_char_false_cases": 3,
+        "h5_gold": 42,
+        "h5_false_cases": 3
+      }
+    }
+  ],
+  "aggregate_note": "5 seeds share same held-out 54 OOV types and same Japanese type inventory. NOT 270/1145 independent natural user observations.",
+  "conclusions": [
+    "H5 raises OOV candidate recall in all five seed partitions; avg 68.9% to 80.7%.",
+    "H5 Japanese false-case counts 29 across partitions versus H4 28; no reliable false-positive reduction.",
+    "Some test partitions exceed the 5% development budget; no distribution-free FPR guarantee.",
+    "Context shifted synthetic templates retain recall gains, but natural language generalization is untested.",
+    "No C# algorithm changed; H5 code is experimental Python only."
+  ]
+}
