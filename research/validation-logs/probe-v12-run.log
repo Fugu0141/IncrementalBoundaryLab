@@ -1,0 +1,4 @@
+<workspace>\research\.validation_v12\src\BoundaryLab.Core\BoundaryLab.Core.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。 [<workspace>\research\.validation_v12\research\validation_probe\BoundaryLab.ValidationProbe.csproj]
+<workspace>\research\.validation_v12\research\validation_probe\BoundaryLab.ValidationProbe.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。
+<workspace>\research\.validation_v12\research\validation_probe\BoundaryLab.ValidationProbe.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。
+<workspace>\research\.validation_v12\src\BoundaryLab.Core\BoundaryLab.Core.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。

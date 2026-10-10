@@ -1,0 +1,7 @@
+<workspace>\tests\BoundaryLab.Core.StressTests\BoundaryLab.Core.StressTests.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。
+<workspace>\tests\BoundaryLab.Core.StressTests\BoundaryLab.Core.StressTests.csproj : warning NU1900: パッケージの脆弱性データの取得中にエラーが発生しました: ソース https://api.nuget.org/v3/index.json のサービス インデックスを読み込めません。
+Stress cases executed: 16,164
+Input characters covered: 379,378
+Determinism rechecks: 500
+Performance: 840 analyzed chars vs naive 2211
+All large-scale RCR stress/property tests passed.

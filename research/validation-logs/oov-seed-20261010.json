@@ -1,0 +1,209 @@
+{
+  "suffix_morphology": {
+    "positive": 54,
+    "positive_detected": 5,
+    "recall": 0.0926,
+    "negative": 34,
+    "negative_detected": 0,
+    "false_positive_rate": 0.0
+  },
+  "character_model": {
+    "positive": 54,
+    "positive_detected": 32,
+    "recall": 0.5926,
+    "negative": 34,
+    "negative_detected": 0,
+    "false_positive_rate": 0.0
+  },
+  "hybrid_candidate_union": {
+    "positive": 54,
+    "positive_detected": 34,
+    "recall": 0.6296,
+    "negative": 34,
+    "negative_detected": 0,
+    "false_positive_rate": 0.0
+  },
+  "japanese_only_glued_controls": {
+    "n": 100,
+    "morphology_false_candidates": 0,
+    "model_false_candidates": 0,
+    "hybrid_false_candidates": 0,
+    "examples": []
+  },
+  "mixed_stream_candidate_recall_and_spurious_spans": {
+    "morphology": {
+      "positive_cases": 54,
+      "positive_gold_span_recovered": 5,
+      "total_proposed_spans_positive_cases": 53,
+      "negative_cases": 34,
+      "negative_cases_with_any_false_english_span": 0,
+      "total_false_spans_negative_cases": 0
+    },
+    "character_model": {
+      "positive_cases": 54,
+      "positive_gold_span_recovered": 30,
+      "total_proposed_spans_positive_cases": 166,
+      "negative_cases": 34,
+      "negative_cases_with_any_false_english_span": 0,
+      "total_false_spans_negative_cases": 0
+    },
+    "hybrid": {
+      "positive_cases": 54,
+      "positive_gold_span_recovered": 32,
+      "total_proposed_spans_positive_cases": 207,
+      "negative_cases": 34,
+      "negative_cases_with_any_false_english_span": 0,
+      "total_false_spans_negative_cases": 0
+    }
+  },
+  "japanese_test_count": 15,
+  "japanese_phonetic_holdout_count": 19,
+  "english_dev_count": 450,
+  "japanese_dev_count": 15,
+  "english_train_count": 116732,
+  "japanese_train_count": 55,
+  "threshold": 0.96139,
+  "split_seed": 20261010,
+  "paradox_probes": {
+    "japanese": {
+      "english_minus_japanese": 0.681,
+      "morphology": true,
+      "model_candidate": false
+    },
+    "tokyo": {
+      "english_minus_japanese": -0.677,
+      "morphology": false,
+      "model_candidate": false
+    },
+    "ime": {
+      "english_minus_japanese": -0.226,
+      "morphology": false,
+      "model_candidate": false
+    },
+    "node": {
+      "english_minus_japanese": -0.053,
+      "morphology": false,
+      "model_candidate": false
+    },
+    "monitor": {
+      "english_minus_japanese": 1.515,
+      "morphology": false,
+      "model_candidate": true
+    },
+    "customer": {
+      "english_minus_japanese": 1.157,
+      "morphology": false,
+      "model_candidate": true
+    },
+    "strategy": {
+      "english_minus_japanese": 1.067,
+      "morphology": false,
+      "model_candidate": true
+    }
+  },
+  "english_missed_by_model": [
+    "knowledge",
+    "schedule",
+    "deadline",
+    "update",
+    "feature",
+    "database",
+    "security",
+    "backup",
+    "laptop",
+    "airport",
+    "hospital",
+    "already",
+    "suddenly",
+    "yesterday",
+    "together",
+    "important",
+    "available",
+    "necessary",
+    "beautiful",
+    "wonderful",
+    "terrible",
+    "awesome"
+  ],
+  "japanese_false_positives_model": [],
+  "english_detected_model_only": [
+    "strategy",
+    "performance",
+    "feedback",
+    "actually",
+    "probably",
+    "basically",
+    "weekend",
+    "meeting",
+    "project",
+    "release",
+    "review",
+    "customer",
+    "keyboard",
+    "monitor",
+    "printer",
+    "wireless",
+    "calendar",
+    "holiday",
+    "restaurant",
+    "library",
+    "teacher",
+    "weather",
+    "morning",
+    "evening",
+    "quickly",
+    "slowly",
+    "carefully",
+    "difficult",
+    "amazing"
+  ],
+  "english_detected_suffix_only": [
+    "available",
+    "terrible"
+  ],
+  "paired_candidate_comparison": {
+    "model_only": 29,
+    "morphology_only": 2,
+    "exact_mcnemar_p_two_sided": 4.628673195838928e-07
+  },
+  "oov_particle_collisions": {
+    "count": 10,
+    "fraction": 0.1852,
+    "examples": {
+      "knowledge": [
+        "no"
+      ],
+      "deadline": [
+        "de"
+      ],
+      "customer": [
+        "to"
+      ],
+      "laptop": [
+        "to"
+      ],
+      "monitor": [
+        "ni",
+        "to",
+        "mo"
+      ],
+      "morning": [
+        "ni",
+        "mo"
+      ],
+      "evening": [
+        "ni"
+      ],
+      "suddenly": [
+        "de"
+      ],
+      "together": [
+        "to"
+      ],
+      "wonderful": [
+        "wo",
+        "de"
+      ]
+    }
+  }
+}
