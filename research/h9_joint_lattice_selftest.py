@@ -103,5 +103,3 @@ class H9JointPathTests(unittest.TestCase):
         self.assertLessEqual(len(configs),18)
 
 if __name__=='__main__':unittest.main(verbosity=2)
-
-END_H9_TES
