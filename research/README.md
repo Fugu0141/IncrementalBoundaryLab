@@ -2,6 +2,13 @@
 
 このディレクトリには実験を時系列で累積します。新しい成果は個別の日付付きノートにし、トップレベルの [README研究ログ](../README.md) に1行追加してください。
 
+## 2026-10-10 — H5 phonotactic + boundary candidate study
+
+- [研究ノート（日本語）](2026-10-10-h5-phonotactic-context-study.md)
+- [再現コード](h5_phonotactic_context_experiment.py) / [8件のテスト](h5_phonotactic_context_selftest.py) / [集計JSON](h5-phonotactic-context-2026-10-10-summary.json)
+- 5種類のデータ分割、4条件のアブレーション、異なる日本語接頭・後続文脈の合成ストレステストを記録
+- H5は候補検出率を改善したが、誤候補は一貫して減らない。IMEの最終精度・性能は未検証。H4研究PRに依存
+
 ## 2026-10-10 — H4 false-candidate-budget study
 
 - [H4の独立実験と留保事項](2026-10-10-h4-error-budget-study.md) — 5seedで候補再現率と日本語の誤候補入力数を比較。制約は開発データの経験的な上限であり、未使用データでの保証ではない

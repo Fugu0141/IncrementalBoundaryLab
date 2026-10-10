@@ -7,6 +7,7 @@
 
 | 日付 | 研究内容 | 確認できたこと / 留保 | 資料 |
 | --- | --- | --- | --- |
+| 2026-10-10 | **H5: 音韻＋境界による候補検出** | 同じ54未知英語の5分割でH4の平均68.9%→H5の80.7%。日本語誤候補は5分割合計28→29と改善せず。別の合成文脈でも検出力は向上。**Python候補実験でありIME未統合** | [H5レポート](research/2026-10-10-h5-phonotactic-context-study.md) / [コード](research/h5_phonotactic_context_experiment.py) |
 | 2026-10-10 | **H4: 誤候補予算付き英語候補生成** | 開発誤候補予算5%で閾値と上位候補を調整。5分割中4分割で日本語誤候補入力が減少する一方、英語候補検出は4分割で低下。未見テストで5%目標を超える場合あり。**Python候補実験でありIME本体には未適用** | [H4研究結果](research/2026-10-10-h4-error-budget-study.md) / [再現コード](research/h4_error_budget_experiment.py) |
 | 2026-10-10 | **Codexによるv1.3独立検証** | C#既存5スイートとPython5テスト成功、RCR中心のストレス16,164件。H1の数値を再現。`customer`等は英語候補生成が不足。H2/H3は未証明、Claude 263件は未再現 | [実験ブランチの検証レポート](https://github.com/Fugu0141/IncrementalBoundaryLab/blob/experiment/stream-hybrid-v1.3-latin-morphology/research/2026-10-10-codex-validation-report.md) |
 | 2026-10-10 | **H1: 未知英語の文字統計による候補生成** | 英語54語で固定語尾のみ5語、文字モデル32語、候補併用34語。候補生成の測定でありIMEの最終変換精度は未測定。5種類のデータ分割で感度確認 | [研究ノート](research/2026-10-10-oov-character-candidates.md) / [再現コード](research/oov_character_model_experiment.py) |
