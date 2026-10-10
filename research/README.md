@@ -2,6 +2,13 @@
 
 このディレクトリには実験を時系列で累積します。新しい成果は個別の日付付きノートにし、トップレベルの [README研究ログ](../README.md) に1行追加してください。
 
+## 2026-10-10 — H7 large-scale mixed input stress study
+
+- [H7レポート](2026-10-10-h7-mixed-stream-stress.md) — 文頭/文中/文末/純英語/複数英語/コード記号/小文字大文字/ローマ字別表記など13分類の測定結果と重大な回帰
+- [H7実験コード](h7_mixed_stream_stress.py) / [11件のテスト](h7_mixed_stream_selftest.py) / [集計JSON](h7-mixed-input-2026-10-10-summary.json)
+- 5分割・合計28,430件の**Python英語候補モデル評価**と、100,000件のGold座標生成プロパティ検証。混在率だけでなく、英語の位置別完全一致、Top4、言語境界F1、表記揺れ、誤英語候補を分離して測定
+- **H6は文中では有利でも、文頭・文末ではH5より大幅に悪い。H7の片側補正も十分ではない。** C#の本体ラティス・逐次操作は別途検証が必要。H6研究PRに依存
+
 ## 2026-10-10 — H6 exact boundary + alternative romaji study
 
 - [区切り位置・表記揺れの研究レポート](2026-10-10-h6-boundary-alias-study.md) — 生入力座標での日本語⇔英語境界F1、±1文字許容、誤候補、aliasペア正解率の比較
