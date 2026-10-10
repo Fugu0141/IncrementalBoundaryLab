@@ -2,6 +2,13 @@
 
 このディレクトリには実験を時系列で累積します。新しい成果は個別の日付付きノートにし、トップレベルの [README研究ログ](../README.md) に1行追加してください。
 
+## 2026-10-10 — H9 follow-up: shifted contexts, failure stages, long inputs
+
+- [結果と原因分析（日本語）](2026-10-10-h9-additional-evaluation.md)：12分類1,094種類×5seed＝5,470回。候補生成・閾値/上位K採用・経路選択を入力単位で別々に集計
+- [再現用Pythonコード](h9_additional_validation.py) / [持ち運び可能な12件のテスト](test_h9_additional_validation.py) / [全分割の集計JSON](h9-additional-summary.json)
+- 短英語/記号/4英語区間の構造制約、1200文字のPython再帰エラー、path選択単体の処理時間も記録。C# / Mozc / TSF は未実行
+- 検証プロトコルは [研究検証標準v1.1（ドキュメントPR #6）](https://github.com/Fugu0141/IncrementalBoundaryLab/pull/6) に拡張。研究コード本体をmainに適用しない
+
 ## 2026-10-10 — H9 joint Japanese-phonetic / English lattice study
 
 - [H9研究レポート](2026-10-10-h9-joint-lattice-study.md) — H7・H8と同一13分類/5分割で、全英語span完全一致・言語切替境界F1・日本語誤検出・別表記精度を比較
